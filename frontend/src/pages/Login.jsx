@@ -15,14 +15,15 @@ export default function Login() {
     try {
       await login(formData.username, formData.password)
     } catch (error) {
-      // Handle error
+      alert("Something went wrong!")
+      console.error('Error:', error)
     }
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white/5 rounded-2xl p-8 backdrop-blur-lg border border-white/10 shadow-xl">
+    <div className="max-w-md mt-10 mx-auto bg-white/5 rounded-2xl p-8 backdrop-blur-lg border border-white/10 shadow-xl">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+        <h2 className="text-3xl font-bold text-white mb-2 animate-fade-in-up">Welcome Back</h2>
         <p className="text-gray-400">Please sign in to continue</p>
       </div>
       

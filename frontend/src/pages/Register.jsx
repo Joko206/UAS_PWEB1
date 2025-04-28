@@ -17,13 +17,13 @@ export default function Register() {
     try {
       await register(formData.username, formData.email, formData.password)
     } catch (error) {
-      // Handle error
+      alert("Something went wrong!")
+      console.error('Error:', error)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      <div className="max-w-md w-full mx-4 bg-white/5 rounded-2xl p-8 backdrop-blur-lg border border-white/10 shadow-xl transform transition-all hover:shadow-2xl">
+      <div className="max-w-md w-full mx-auto mt-5 bg-white/5 rounded-2xl p-8 backdrop-blur-lg border border-white/10 shadow-xl transform transition-all hover:shadow-2xl">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2 animate-fade-in-up">
             Create Account
@@ -107,6 +107,5 @@ export default function Register() {
           </Link>
         </p>
       </div>
-    </div>
   )
 }

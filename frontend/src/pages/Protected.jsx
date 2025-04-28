@@ -12,7 +12,7 @@ function Protected() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/protected', {
+        const response = await axios.get('http://localhost:3000/protected', {
           headers: {
             Authorization: `Bearer ${token}`
           }

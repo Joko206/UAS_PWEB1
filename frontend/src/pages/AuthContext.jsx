@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('http://localhost:8080/login', {
+      const response = await axios.post('http://localhost:3000/login', {
         username,
         password
       })
@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
 
   const register = async (username, email, password) => {
     try {
-      await axios.post('http://localhost:8080/register', {
+      await axios.post('http://localhost:3000/register', {
         username,
         email,
         password

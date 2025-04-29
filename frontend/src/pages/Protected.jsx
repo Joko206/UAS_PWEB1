@@ -12,7 +12,7 @@ function Protected() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/protected', {
+        const response = await axios.get('http://localhost:3000/protected', {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -74,30 +74,30 @@ function Protected() {
   }
 
   return (
-    <div className="container mt-5">
-      <div className="card shadow mx-auto" style={{ maxWidth: '600px' }}>
-        <div className="card-header bg-primary text-white">
-          <h2 className="mb-0">Protected Page</h2>
+    <div className="container mt-30 mx-auto">
+      <div className="card mx-auto rounded-md bg-gradient-to-l from-blue-900 to-green-700 p-5" style={{ maxWidth: '600px' }}>
+        <div className="card-header bg-primary">
+          <h2 className="mb-0 text-white font-bold tracking-wider">Protected Page</h2>
         </div>
         <div className="card-body">
           {data ? (
             <>
-              <p className="lead">{data.message}</p>
+              <p className="lead text-black font-bold font-mono">{data.message}</p>
               <div className="mt-4">
-                <h4>User Details:</h4>
-                <ul className="list-group">
+                <h4 className='text-white font-bold'>User Details:</h4>
+                <ul className="list-group text-black">
                   <li className="list-group-item">
-                    <strong>ID:</strong> {data.user.id}
+                    <strong>ID:</strong> <span className='text-blue-950 font-mono font-bold'>{data.user.id}</span>
                   </li>
                   <li className="list-group-item">
-                    <strong>Username:</strong> {data.user.username}
+                    <strong>Username:</strong> <span className='text-blue-950 font-mono font-bold'>{data.user.username}</span>
                   </li>
                   <li className="list-group-item">
-                    <strong>Email:</strong> {data.user.email}
+                    <strong>Email:</strong> <span className='text-blue-950 font-mono font-bold'>{data.user.email}</span>
                   </li>
                   <li className="list-group-item">
-                    <strong>Created At:</strong> 
-                    {new Date(data.user.createdAt).toLocaleDateString()}
+                    <strong>Created At: </strong> 
+                    <span className='text-blue-950 font-mono font-bold'>{new Date(data.user.createdAt).toLocaleDateString()}</span>
                   </li>
                 </ul>
               </div>

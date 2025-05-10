@@ -6,7 +6,12 @@ import (
 )
 
 func Setup(app *fiber.App) {
+
 	api := app.Group("/user")
+
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		return ctx.SendString("haloo sekarang kamu ada didalam api user")
+	})
 
 	api.Get("/get-user", controllers.User)
 	api.Post("/register", controllers.Register)

@@ -13,7 +13,7 @@ func CreateKelas(name string, description string) (models.Kelas, error) {
 	var newTask = models.Kelas{Name: name, Description: description}
 
 	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 		return newTask, err
@@ -32,7 +32,7 @@ func CreateKelas(name string, description string) (models.Kelas, error) {
 func GetKelas() ([]models.Kelas, error) {
 	var newTask []models.Kelas
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return newTask, err
 	}
@@ -44,7 +44,7 @@ func GetKelas() ([]models.Kelas, error) {
 func DeleteKelas(id string) error {
 	var newTask models.Kelas
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 
 	if err != nil {
 		return err
@@ -57,7 +57,7 @@ func DeleteKelas(id string) error {
 func UpdateKelas(name string, description string, id string) (models.Kelas, error) {
 	var newTask = models.Kelas{Name: name, Description: description}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return newTask, err
 	}

@@ -93,4 +93,19 @@ func Setup(app *fiber.App) {
 	Soal.Patch("/update-soal", controllers.UpdateSoal)
 	Soal.Delete("/delete-soal", controllers.DeleteSoal)
 
+	Pendidikan := app.Group("/pendidikan")
+
+	Pendidikan.Get("/", func(ctx *fiber.Ctx) error {
+		_, err := controllers.Authenticate(ctx)
+		if err != nil {
+			return err
+		}
+		return ctx.SendString("haloo sekarang kamu ada didalam api pendidikan")
+	})
+
+	Pendidikan.Get("/get-pendidikan", controllers.GetPendidikan)
+	Pendidikan.Post("/add-pendidikan", controllers.AddPendidikan)
+	Pendidikan.Patch("/update-pendidikan", controllers.UpdatePendidikan)
+	Pendidikan.Delete("/delete-pendidikan", controllers.DeletePendidikan)
+
 }

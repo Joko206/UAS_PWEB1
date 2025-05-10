@@ -17,16 +17,16 @@ const (
 	dbname   = "railway"
 )
 
-var dsn string = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable TimeZone=Asia/Jakarta", host, port, user, password, dbname)
+var Dsn = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable TimeZone=Asia/Jakarta", host, port, user, password, dbname)
 
 var DB *gorm.DB
 
 func DBconn() {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error connecting to database:", err)
 	}
 	DB = db
 
-	db.AutoMigrate(&models.Users{}, &models.Kategori_Soal{}, &models.Tingkatan{}, models.Kelas{}, models.Kuis{}, models.Soal{})
+	db.AutoMigrate(&models.Users{}, &models.Kategori_Soal{}, &models.Tingkatan{}, models.Kelas{}, models.Kuis{}, models.Soal{}, models.Pendidikan{})
 }

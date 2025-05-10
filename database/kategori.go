@@ -13,7 +13,7 @@ func CreateKategori(name string, description string) (models.Kategori_Soal, erro
 	var newKategori = models.Kategori_Soal{Name: name, Description: description}
 
 	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error connecting to database:", err)
 		return newKategori, err
@@ -32,7 +32,7 @@ func CreateKategori(name string, description string) (models.Kategori_Soal, erro
 func GetallTasks() ([]models.Kategori_Soal, error) {
 	var getKategori []models.Kategori_Soal
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return getKategori, err
 	}
@@ -41,10 +41,11 @@ func GetallTasks() ([]models.Kategori_Soal, error) {
 
 	return getKategori, nil
 }
-func DeleteKateggori(id string) error {
+
+func DeleteKategori(id string) error {
 	var deleteKategori models.Kategori_Soal
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func DeleteKateggori(id string) error {
 func UpdateKategori(name string, description string, id string) (models.Kategori_Soal, error) {
 	var newTask = models.Kategori_Soal{Name: name, Description: description}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return newTask, err
 	}

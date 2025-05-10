@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/Joko206/UAS_PWEB1/models"
@@ -8,31 +9,46 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateKuis(title string, description string, kategori_id int, tingkatan_id int, kelas_id int) (models.Kuis, error) {
-	// Create a new Kategori_Soal instance
-	var newTask = models.Kuis{Title: title, Description: description, Kategori_id: kategori_id, Tingkatan_id: tingkatan_id, Kelas_id: kelas_id}
+// Fungsi untuk membuat Kuis
+func CreateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint) (models.Kuis, error) {
+	var newTask = models.Kuis{Title: title, Description: description, Kategori_id: kategori, Tingkatan_id: tingkatan, Kelas_id: kelas}
 
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatal("Error connecting to database:", err)
 		return newTask, err
 	}
 
-	// Insert the new category into the database
+	// Pastikan ID kategori, tingkatan, dan kelas valid
+	var kategoriObj models.Kategori_Soal
+	if err := db.First(&kategoriObj, kategori).Error; err != nil {
+		return newTask, fmt.Errorf("Invalid Kategori ID")
+	}
+
+	// Lakukan hal yang sama untuk Tingkatan dan Kelas
+	var tingkatanObj models.Tingkatan
+	if err := db.First(&tingkatanObj, tingkatan).Error; err != nil {
+		return newTask, fmt.Errorf("Invalid Tingkatan ID")
+	}
+
+	var kelasObj models.Kelas
+	if err := db.First(&kelasObj, kelas).Error; err != nil {
+		return newTask, fmt.Errorf("Invalid Kelas ID")
+	}
+
+	// Setelah validasi, masukkan data
 	err = db.Create(&newTask).Error
 	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
+		log.Fatal("Error inserting data into kuis:", err)
 		return newTask, err
 	}
 
-	// Return the newly created category
 	return newTask, nil
 }
+
 func GetKuis() ([]models.Kuis, error) {
 	var newTask []models.Kuis
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return newTask, err
 	}
@@ -44,7 +60,7 @@ func GetKuis() ([]models.Kuis, error) {
 func DeleteKuis(id string) error {
 	var newTask models.Kuis
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 
 	if err != nil {
 		return err
@@ -54,10 +70,10 @@ func DeleteKuis(id string) error {
 	return nil
 
 }
-func UpdateKuis(title string, description string, kategori_id int, tingkatan_id int, kelas_id int, id string) (models.Kuis, error) {
-	var newTask = models.Kuis{Title: title, Description: description, Kategori_id: kategori_id, Tingkatan_id: tingkatan_id, Kelas_id: kelas_id}
+func UpdateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, id string) (models.Kuis, error) {
+	var newTask = models.Kuis{Title: title, Description: description, Kategori_id: kategori, Tingkatan_id: tingkatan, Kelas_id: kelas}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
 	if err != nil {
 		return newTask, err
 	}

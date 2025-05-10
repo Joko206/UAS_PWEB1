@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"log"
+
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func GetKuis(c *fiber.Ctx) error {
@@ -29,40 +33,56 @@ func GetKuis(c *fiber.Ctx) error {
 	})
 }
 
+// Fungsi untuk menambahkan Kuis
 func AddKuis(c *fiber.Ctx) error {
+
+	var db *gorm.DB
+	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Error connecting to the database: ", err)
+	}
+
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+	_, err = Authenticate(c)
 	if err != nil {
 		return err
 	}
 
-	newKategori := new(models.Kuis)
-	err = c.BodyParser(newKategori)
+	newKuis := new(models.Kuis)
+	err = c.BodyParser(newKuis)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
+		return c.Status(400).JSON(&fiber.Map{
 			"data":    nil,
 			"success": false,
-			"message": err,
+			"message": err.Error(),
 		})
-		return err
 	}
 
-	result, err := database.CreateKuis(newKategori.Title, newKategori.Description, newKategori.Kategori_id, newKategori.Tingkatan_id, newKategori.Kelas_id)
-	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
+	// Cek apakah kategori_id ada di tabel kategori_soals
+	var kategori models.Kategori_Soal
+	if err := db.First(&kategori, newKuis.Kategori_id).Error; err != nil {
+		return c.Status(400).JSON(&fiber.Map{
 			"data":    nil,
 			"success": false,
-			"message": err,
+			"message": "Invalid Kategori ID",
 		})
-		return err
 	}
 
-	c.Status(200).JSON(&fiber.Map{
+	// Lanjutkan dengan operasi database jika kategori valid
+	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id)
+	if err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"data":    nil,
+			"success": false,
+			"message": err.Error(),
+		})
+	}
+
+	return c.Status(200).JSON(&fiber.Map{
 		"data":    result,
 		"success": true,
 		"message": "Task added!",
 	})
-	return nil
 }
 
 func UpdateKuis(c *fiber.Ctx) error {

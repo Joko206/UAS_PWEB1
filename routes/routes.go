@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"belajar-via-dev.to/controllers"
+	"github.com/Joko206/UAS_PWEB1/controllers"
 	"github.com/gofiber/fiber/v2"
 )
 

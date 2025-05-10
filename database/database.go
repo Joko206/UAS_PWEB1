@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"belajar-via-dev.to/models"
+	"github.com/Joko206/UAS_PWEB1/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

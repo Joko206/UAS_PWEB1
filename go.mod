@@ -1,4 +1,4 @@
-module belajar-via-dev.to
+module github.com/Joko206/UAS_PWEB1
 
 go 1.24.2
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"belajar-via-dev.to/database"
-	"belajar-via-dev.to/routes"
+	"github.com/Joko206/UAS_PWEB1/database"
+	"github.com/Joko206/UAS_PWEB1/routes"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -14,6 +14,6 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Listen(":8000")
+	app.Listen("0.0.0.0 :8000")
 
 }

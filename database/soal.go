@@ -2,67 +2,87 @@ package database
 
 import (
 	"encoding/json"
-	"log"
-
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func CreateSoal(question string, option json.RawMessage, correct_answer string, kuis_id uint) (models.Soal, error) {
-	// Create a new Kategori_Soal instance
-	var newKategori = models.Soal{Question: question, Options: option, Correct_answer: correct_answer, Kuis_id: kuis_id}
-
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Error connecting to database:", err)
-		return newKategori, err
+	var newSoal = models.Soal{
+		Question:       question,
+		Options:        option,
+		Correct_answer: correct_answer,
+		Kuis_id:        kuis_id,
 	}
 
-	// Insert the new category into the database
-	err = db.Create(&newKategori).Error
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
-		return newKategori, err
+		return newSoal, err
 	}
 
-	// Return the newly created category
-	return newKategori, nil
+	// Insert the new Soal into the database
+	if err := db.Create(&newSoal).Error; err != nil {
+		return newSoal, fmt.Errorf("failed to insert data into soal: %w", err)
+	}
+
+	return newSoal, nil
 }
+
+// GetSoal retrieves all Soal from the database
 func GetSoal() ([]models.Soal, error) {
-	var getKategori []models.Soal
+	var soalList []models.Soal
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		return getKategori, err
+		return soalList, err
 	}
 
-	db.Find(&getKategori)
+	// Retrieve all Soal
+	if err := db.Find(&soalList).Error; err != nil {
+		return soalList, fmt.Errorf("failed to retrieve soal: %w", err)
+	}
 
-	return getKategori, nil
+	return soalList, nil
 }
-func DeletSoal(id string) error {
-	var deleteKategori models.Soal
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+// DeleteSoal deletes a Soal by its ID
+func DeleteSoal(id string) error {
+	var soal models.Soal
 
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return err
 	}
 
-	db.Where("ID = ?", id).Delete(&deleteKategori)
-	return nil
-
-}
-func UpdateSoal(question string, option json.RawMessage, correct_answer string, kuis_id uint, id string) (models.Soal, error) {
-	var newTask = models.Soal{Question: question, Options: option, Correct_answer: correct_answer, Kuis_id: kuis_id}
-
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		return newTask, err
+	// Delete the Soal by ID
+	if err := db.Where("ID = ?", id).Delete(&soal).Error; err != nil {
+		return fmt.Errorf("failed to delete soal: %w", err)
 	}
 
-	db.Where("ID = ?", id).Updates(&models.Soal{Question: newTask.Question, Options: newTask.Options, Correct_answer: newTask.Correct_answer, Kuis_id: newTask.Kuis_id})
-	return newTask, nil
+	return nil
+}
+
+// UpdateSoal updates an existing Soal in the database
+func UpdateSoal(question string, option json.RawMessage, correct_answer string, kuis_id uint, id string) (models.Soal, error) {
+	var updatedSoal = models.Soal{
+		Question:       question,
+		Options:        option,
+		Correct_answer: correct_answer,
+		Kuis_id:        kuis_id,
+	}
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		return updatedSoal, err
+	}
+
+	// Update the Soal details
+	if err := db.Where("ID = ?", id).Updates(&updatedSoal).Error; err != nil {
+		return updatedSoal, fmt.Errorf("failed to update soal: %w", err)
+	}
+
+	return updatedSoal, nil
 }

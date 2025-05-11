@@ -37,14 +37,15 @@ func Authenticate(c *fiber.Ctx) (*models.Users, error) {
 
 	return &user, nil
 }
-
 func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
+	// Parse request body
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
+	// Hash password before saving
 	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 
 	user := models.Users{
@@ -53,27 +54,33 @@ func Register(c *fiber.Ctx) error {
 		Password: password,
 	}
 
-	database.DB.Create(&user)
+	// Save user to the database
+	if err := database.DB.Create(&user).Error; err != nil {
+		return handleError(c, err, "Failed to register user")
+	}
 
-	return c.JSON(user)
+	return sendResponse(c, fiber.StatusOK, true, "User registered successfully", user)
 }
-
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
 
+	// Parse request body
 	if err := c.BodyParser(&data); err != nil {
-		return err
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
 	var user models.Users
-	database.DB.Where("email = ?", data["email"]).First(&user)
-	if user.ID == 0 {
-		return c.Status(404).JSON(fiber.Map{"message": "User not found"})
-	}
-	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(data["password"])); err != nil {
-		return c.Status(401).JSON(fiber.Map{"message": "Invalid password"})
+	// Find user by email
+	if err := database.DB.Where("email = ?", data["email"]).First(&user).Error; err != nil {
+		return sendResponse(c, fiber.StatusNotFound, false, "User not found", nil)
 	}
 
+	// Compare password
+	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(data["password"])); err != nil {
+		return sendResponse(c, fiber.StatusUnauthorized, false, "Invalid password", nil)
+	}
+
+	// Generate JWT token
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Issuer:    strconv.Itoa(int(user.ID)),
 		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
@@ -81,24 +88,20 @@ func Login(c *fiber.Ctx) error {
 
 	token, err := claims.SignedString([]byte(SecretKey))
 	if err != nil {
-		c.Status(fiber.StatusInternalServerError)
-		return c.JSON(fiber.Map{
-			"message": "could not login",
-		})
+		return handleError(c, err, "Failed to generate token")
 	}
 
+	// Set JWT cookie
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    token,
 		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
 	}
-
 	c.Cookie(&cookie)
 
-	return c.JSON(fiber.Map{
-		"message": "success",
-		"token":   token,
+	return sendResponse(c, fiber.StatusOK, true, "Login successful", fiber.Map{
+		"token": token,
 	})
 }
 
@@ -109,7 +112,8 @@ func User(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(user)
+	// Return user details
+	return sendResponse(c, fiber.StatusOK, true, "User retrieved successfully", user)
 }
 
 func Logout(c *fiber.Ctx) error {
@@ -119,10 +123,8 @@ func Logout(c *fiber.Ctx) error {
 		Expires:  time.Now().Add(-time.Hour * 24),
 		HTTPOnly: true,
 	}
-
 	c.Cookie(&cookie)
 
-	return c.JSON(fiber.Map{
-		"message": "success",
-	})
+	// Return success message
+	return sendResponse(c, fiber.StatusOK, true, "Logout successful", nil)
 }

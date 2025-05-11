@@ -1,68 +1,78 @@
 package database
 
 import (
-	"log"
-
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
+// CreatePendidikan creates a new Pendidikan in the database
 func CreatePendidikan(name string, description string) (models.Pendidikan, error) {
-	// Create a new Kategori_Soal instance
 	var newPendidikan = models.Pendidikan{Name: name, Description: description}
 
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to database:", err)
 		return newPendidikan, err
 	}
 
-	// Insert the new category into the database
-	err = db.Create(&newPendidikan).Error
-	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
-		return newPendidikan, err
+	// Insert the new Pendidikan into the database
+	if err := db.Create(&newPendidikan).Error; err != nil {
+		return newPendidikan, fmt.Errorf("failed to insert data into pendidikan: %w", err)
 	}
 
-	// Return the newly created category
 	return newPendidikan, nil
 }
-func GetPendidikan() ([]models.Pendidikan, error) {
-	var getKategori []models.Pendidikan
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+// GetPendidikan retrieves all Pendidikan from the database
+func GetPendidikan() ([]models.Pendidikan, error) {
+	var pendidikanList []models.Pendidikan
+
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		return getKategori, err
+		return pendidikanList, err
 	}
 
-	db.Find(&getKategori)
+	// Retrieve all Pendidikan
+	if err := db.Find(&pendidikanList).Error; err != nil {
+		return pendidikanList, fmt.Errorf("failed to retrieve pendidikan: %w", err)
+	}
 
-	return getKategori, nil
+	return pendidikanList, nil
 }
 
+// DeletePendidikan deletes a Pendidikan by its ID
 func DeletePendidikan(id string) error {
-	var deleteKategori models.Pendidikan
+	var pendidikan models.Pendidikan
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return err
 	}
 
-	db.Where("ID = ?", id).Delete(&deleteKategori)
-	return nil
-
-}
-func UpdatePendidikan(name string, description string, id string) (models.Pendidikan, error) {
-	var newTask = models.Pendidikan{Name: name, Description: description}
-
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		return newTask, err
+	// Delete the Pendidikan by ID
+	if err := db.Where("ID = ?", id).Delete(&pendidikan).Error; err != nil {
+		return fmt.Errorf("failed to delete pendidikan: %w", err)
 	}
 
-	db.Where("ID = ?", id).Updates(&models.Kategori_Soal{Name: newTask.Name, Description: newTask.Description})
-	return newTask, nil
+	return nil
+}
+
+// UpdatePendidikan updates an existing Pendidikan in the database
+func UpdatePendidikan(name string, description string, id string) (models.Pendidikan, error) {
+	var updatedPendidikan = models.Pendidikan{Name: name, Description: description}
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		return updatedPendidikan, err
+	}
+
+	// Update the Pendidikan details
+	if err := db.Where("ID = ?", id).Updates(&updatedPendidikan).Error; err != nil {
+		return updatedPendidikan, fmt.Errorf("failed to update pendidikan: %w", err)
+	}
+
+	return updatedPendidikan, nil
 }

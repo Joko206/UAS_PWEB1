@@ -8,132 +8,69 @@ import (
 
 func GetTingkatan(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	result, err := database.GetTingkatan()
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
+		return handleError(c, err, "Failed to retrieve Tingkatan")
 	}
 
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "All Tasks",
-	})
+	return sendResponse(c, fiber.StatusOK, true, "All Tingkatan retrieved successfully", result)
 }
 
 func AddTingkatan(c *fiber.Ctx) error {
+
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+
+	// Parse body request for new Tingkatan
+	newTingkatan := new(models.Tingkatan)
+	err := c.BodyParser(newTingkatan)
 	if err != nil {
-		return err
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	newKategori := new(models.Kategori_Soal)
-	err = c.BodyParser(newKategori)
+	// Create Tingkatan
+	result, err := database.CreateTingkatan(newTingkatan.Name, newTingkatan.Description)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+		return handleError(c, err, "Failed to add Tingkatan")
 	}
 
-	result, err := database.CreateTingkatan(newKategori.Name, newKategori.Description)
-	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
-	}
-
-	c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "Task added!",
-	})
-	return nil
+	return sendResponse(c, fiber.StatusOK, true, "Tingkatan added successfully", result)
 }
 
 func UpdateTingkatan(c *fiber.Ctx) error {
-	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
-
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"message": "id cannot be empty",
-		})
+		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	newTask := new(models.Tingkatan)
-	err = c.BodyParser(newTask)
+	// Parse body request for updated Tingkatan
+	newTingkatan := new(models.Tingkatan)
+	err := c.BodyParser(newTingkatan)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	result, err := database.UpdateTingkatan(newTask.Name, newTask.Description, id)
+	// Update Tingkatan
+	result, err := database.UpdateTingkatan(newTingkatan.Name, newTingkatan.Description, id)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+		return handleError(c, err, "Failed to update Tingkatan")
 	}
 
-	c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "Task Updated!",
-	})
-	return nil
+	return sendResponse(c, fiber.StatusOK, true, "Tingkatan updated successfully", result)
 }
 
 func DeleteTingkatan(c *fiber.Ctx) error {
-	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"message": "id cannot be empty",
-		})
+		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err = database.DeleteTingkatan(id)
+	// Delete Tingkatan
+	err := database.DeleteTingkatan(id)
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
+		return handleError(c, err, "Failed to delete Tingkatan")
 	}
 
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    nil,
-		"success": true,
-		"message": "Task Deleted Successfully",
-	})
+	return sendResponse(c, fiber.StatusOK, true, "Tingkatan deleted successfully", nil)
 }

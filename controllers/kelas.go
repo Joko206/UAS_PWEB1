@@ -8,132 +8,64 @@ import (
 
 func GetKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	result, err := database.GetKelas()
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
+		return handleError(c, err, "Failed to retrieve classes")
 	}
 
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "All Tasks",
-	})
+	return sendResponse(c, fiber.StatusOK, true, "All classes retrieved successfully", result)
 }
 
 func AddKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	newKategori := new(models.Kelas)
-	err = c.BodyParser(newKategori)
-	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+	if err := c.BodyParser(newKategori); err != nil {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
 	result, err := database.CreateKelas(newKategori.Name, newKategori.Description)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+		return handleError(c, err, "Failed to add class")
 	}
 
-	c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "Task added!",
-	})
-	return nil
+	return sendResponse(c, fiber.StatusOK, true, "Class added successfully", result)
 }
 
 func UpdateKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"message": "id cannot be empty",
-		})
+		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
 	newTask := new(models.Kelas)
-	err = c.BodyParser(newTask)
-	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+	if err := c.BodyParser(newTask); err != nil {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
 	result, err := database.UpdateKelas(newTask.Name, newTask.Description, id)
 	if err != nil {
-		c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
-		return err
+		return handleError(c, err, "Failed to update class")
 	}
 
-	c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "Task Updated!",
-	})
-	return nil
+	return sendResponse(c, fiber.StatusOK, true, "Class updated successfully", result)
 }
 
 func DeleteKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	id := c.Params("id")
 	if id == "" {
-		return c.Status(500).JSON(&fiber.Map{
-			"message": "id cannot be empty",
-		})
+		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err = database.DeleteKelas(id)
+	err := database.DeleteKelas(id)
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err,
-		})
+		return handleError(c, err, "Failed to delete class")
 	}
 
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    nil,
-		"success": true,
-		"message": "Task Deleted Successfully",
-	})
+	return sendResponse(c, fiber.StatusOK, true, "Class deleted successfully", nil)
 }

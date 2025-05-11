@@ -20,31 +20,19 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	var userAnswers []models.SoalAnswer
 	err = c.BodyParser(&userAnswers)
 	if err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err.Error(),
-		})
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
 	// Simpan jawaban pengguna ke dalam SoalAnswer
 	if err := db.Create(&userAnswers).Error; err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": "Failed to save answers",
-		})
+		return handleError(c, err, "Failed to save answers")
 	}
 
-	// Ambil kuis_id dari soal yang pertama
+	// Ambil soal terkait untuk mendapatkan kuis_id
 	soalID := userAnswers[0].Soal_id
 	var soal models.Soal
 	if err := db.First(&soal, soalID).Error; err != nil {
-		return c.Status(400).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": "Invalid Soal ID",
-		})
+		return handleError(c, err, "Invalid Soal ID")
 	}
 
 	// Ambil kuis_id dari soal yang terkait
@@ -53,18 +41,13 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	// Dapatkan soal-soal yang terkait dengan kuis ini
 	var soalList []models.Soal
 	if err := db.Where("kuis_id = ?", kuisID).Find(&soalList).Error; err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": err.Error(),
-		})
+		return handleError(c, err, "Failed to fetch related questions")
 	}
 
 	// Hitung skor dan jumlah jawaban yang benar
 	var correctAnswers uint
 	for _, answer := range userAnswers {
 		for _, soal := range soalList {
-			// Perbandingkan soal_id dan jawaban dengan soal yang benar
 			if answer.Soal_id == soal.ID && answer.Answer == soal.Correct_answer {
 				correctAnswers++
 			}
@@ -82,39 +65,25 @@ func SubmitJawaban(c *fiber.Ctx) error {
 		Correct_Answer: correctAnswers,
 	}
 
-	// Pastikan tidak ada duplikasi hasil untuk user_id dan kuis_id yang sama
+	// Cek apakah hasil sudah ada
 	var existingResult models.Hasil_Kuis
 	if err := db.Where("users_id = ? AND kuis_id = ?", userAnswers[0].User_id, kuisID).First(&existingResult).Error; err == nil {
-		// Jika hasil sudah ada, update hasil yang lama
+		// Jika sudah ada, update hasil
 		existingResult.Score = score
 		existingResult.Correct_Answer = correctAnswers
 		if err := db.Save(&existingResult).Error; err != nil {
-			return c.Status(500).JSON(&fiber.Map{
-				"data":    nil,
-				"success": false,
-				"message": "Failed to update result",
-			})
+			return handleError(c, err, "Failed to update result")
 		}
 	} else {
-		// Jika hasil belum ada, simpan hasil baru
+		// Simpan hasil baru
 		if err := db.Create(&result).Error; err != nil {
-			return c.Status(500).JSON(&fiber.Map{
-				"data":    nil,
-				"success": false,
-				"message": "Failed to save result",
-			})
+			return handleError(c, err, "Failed to save result")
 		}
 	}
 
-	// Return hasilnya
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    result,
-		"success": true,
-		"message": "Kuis submitted successfully",
-	})
+	// Kembalikan hasil
+	return sendResponse(c, fiber.StatusOK, true, "Kuis submitted successfully", result)
 }
-
-// Fungsi untuk mendapatkan hasil kuis berdasarkan user_id dan kuis_id
 func GetHasilKuis(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	kuisID := c.Params("kuis_id")
@@ -122,28 +91,15 @@ func GetHasilKuis(c *fiber.Ctx) error {
 	var db *gorm.DB
 	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
 	if err != nil {
-		return c.Status(500).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": "Failed to connect to the database",
-		})
+		return handleError(c, err, "Failed to connect to the database")
 	}
 
 	// Cari hasil kuis berdasarkan user_id dan kuis_id
 	var hasilKuis models.Hasil_Kuis
 	if err := db.Where("users_id = ? AND kuis_id = ?", userID, kuisID).First(&hasilKuis).Error; err != nil {
-		return c.Status(404).JSON(&fiber.Map{
-			"data":    nil,
-			"success": false,
-			"message": "Result not found",
-		})
+		return sendResponse(c, fiber.StatusNotFound, false, "Result not found", nil)
 	}
 
 	// Kembalikan hasil kuis
-	return c.Status(200).JSON(&fiber.Map{
-		"data":    hasilKuis,
-		"success": true,
-		"message": "Hasil kuis ditemukan",
-	})
-
+	return sendResponse(c, fiber.StatusOK, true, "Hasil kuis ditemukan", hasilKuis)
 }

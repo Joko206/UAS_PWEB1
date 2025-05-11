@@ -1,68 +1,78 @@
 package database
 
 import (
-	"log"
-
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
+// CreateKategori creates a new Kategori_Soal in the database
 func CreateKategori(name string, description string) (models.Kategori_Soal, error) {
-	// Create a new Kategori_Soal instance
 	var newKategori = models.Kategori_Soal{Name: name, Description: description}
 
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to database:", err)
 		return newKategori, err
 	}
 
 	// Insert the new category into the database
-	err = db.Create(&newKategori).Error
-	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
-		return newKategori, err
+	if err := db.Create(&newKategori).Error; err != nil {
+		return newKategori, fmt.Errorf("failed to insert data into kategori_soal: %w", err)
 	}
 
-	// Return the newly created category
 	return newKategori, nil
 }
+
+// GetallTasks retrieves all Kategori_Soal from the database
 func GetallTasks() ([]models.Kategori_Soal, error) {
 	var getKategori []models.Kategori_Soal
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return getKategori, err
 	}
 
-	db.Find(&getKategori)
+	// Retrieve all categories
+	if err := db.Find(&getKategori).Error; err != nil {
+		return getKategori, fmt.Errorf("failed to retrieve categories: %w", err)
+	}
 
 	return getKategori, nil
 }
 
+// DeleteKategori deletes a Kategori_Soal by its ID
 func DeleteKategori(id string) error {
 	var deleteKategori models.Kategori_Soal
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return err
 	}
 
-	db.Where("ID = ?", id).Delete(&deleteKategori)
-	return nil
-
-}
-func UpdateKategori(name string, description string, id string) (models.Kategori_Soal, error) {
-	var newTask = models.Kategori_Soal{Name: name, Description: description}
-
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		return newTask, err
+	// Delete the category by ID
+	if err := db.Where("ID = ?", id).Delete(&deleteKategori).Error; err != nil {
+		return fmt.Errorf("failed to delete category: %w", err)
 	}
 
-	db.Where("ID = ?", id).Updates(&models.Kategori_Soal{Name: newTask.Name, Description: newTask.Description})
-	return newTask, nil
+	return nil
+}
+
+// UpdateKategori updates an existing Kategori_Soal in the database
+func UpdateKategori(name string, description string, id string) (models.Kategori_Soal, error) {
+	var updatedKategori = models.Kategori_Soal{Name: name, Description: description}
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		return updatedKategori, err
+	}
+
+	// Update the category details
+	if err := db.Where("ID = ?", id).Updates(&updatedKategori).Error; err != nil {
+		return updatedKategori, fmt.Errorf("failed to update category: %w", err)
+	}
+
+	return updatedKategori, nil
 }

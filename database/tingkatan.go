@@ -1,67 +1,78 @@
 package database
 
 import (
-	"log"
-
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
+// CreateTingkatan creates a new Tingkatan in the database
 func CreateTingkatan(name string, description string) (models.Tingkatan, error) {
-	// Create a new Kategori_Soal instance
-	var newTask = models.Tingkatan{Name: name, Description: description}
+	var newTingkatan = models.Tingkatan{Name: name, Description: description}
 
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to database:", err)
-		return newTask, err
+		return newTingkatan, err
 	}
 
-	// Insert the new category into the database
-	err = db.Create(&newTask).Error
-	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
-		return newTask, err
+	// Insert the new Tingkatan into the database
+	if err := db.Create(&newTingkatan).Error; err != nil {
+		return newTingkatan, fmt.Errorf("failed to insert data into tingkatan: %w", err)
 	}
 
-	// Return the newly created category
-	return newTask, nil
+	return newTingkatan, nil
 }
+
+// GetTingkatan retrieves all Tingkatan from the database
 func GetTingkatan() ([]models.Tingkatan, error) {
-	var newTask []models.Tingkatan
+	var tingkatanList []models.Tingkatan
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		return newTask, err
+		return tingkatanList, err
 	}
 
-	db.Find(&newTask)
+	// Retrieve all Tingkatan
+	if err := db.Find(&tingkatanList).Error; err != nil {
+		return tingkatanList, fmt.Errorf("failed to retrieve tingkatan: %w", err)
+	}
 
-	return newTask, nil
+	return tingkatanList, nil
 }
+
+// DeleteTingkatan deletes a Tingkatan by its ID
 func DeleteTingkatan(id string) error {
-	var newTask models.Tingkatan
+	var tingkatan models.Tingkatan
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return err
 	}
 
-	db.Where("ID = ?", id).Delete(&newTask)
-	return nil
-
-}
-func UpdateTingkatan(name string, description string, id string) (models.Tingkatan, error) {
-	var newTask = models.Tingkatan{Name: name, Description: description}
-
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		return newTask, err
+	// Delete the Tingkatan by ID
+	if err := db.Where("ID = ?", id).Delete(&tingkatan).Error; err != nil {
+		return fmt.Errorf("failed to delete tingkatan: %w", err)
 	}
 
-	db.Where("ID = ?", id).Updates(&models.Tingkatan{Name: newTask.Name, Description: newTask.Description})
-	return newTask, nil
+	return nil
+}
+
+// UpdateTingkatan updates an existing Tingkatan in the database
+func UpdateTingkatan(name string, description string, id string) (models.Tingkatan, error) {
+	var updatedTingkatan = models.Tingkatan{Name: name, Description: description}
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		return updatedTingkatan, err
+	}
+
+	// Update the Tingkatan details
+	if err := db.Where("ID = ?", id).Updates(&updatedTingkatan).Error; err != nil {
+		return updatedTingkatan, fmt.Errorf("failed to update tingkatan: %w", err)
+	}
+
+	return updatedTingkatan, nil
 }

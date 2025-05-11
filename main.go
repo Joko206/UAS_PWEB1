@@ -8,7 +8,7 @@ import (
 
 func main() {
 
-	database.DBconn()
+	database.GetDBConnection()
 
 	app := fiber.New()
 

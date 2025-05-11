@@ -1,67 +1,78 @@
 package database
 
 import (
-	"log"
-
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/models"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
+// CreateKelas creates a new Kelas in the database
 func CreateKelas(name string, description string) (models.Kelas, error) {
-	// Create a new Kategori_Soal instance
-	var newTask = models.Kelas{Name: name, Description: description}
+	var newKelas = models.Kelas{Name: name, Description: description}
 
-	// Open a database connection (or reuse the global DB connection)
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to database:", err)
-		return newTask, err
+		return newKelas, err
 	}
 
-	// Insert the new category into the database
-	err = db.Create(&newTask).Error
-	if err != nil {
-		log.Fatal("Error inserting data into kategori_soal:", err)
-		return newTask, err
+	// Insert the new class into the database
+	if err := db.Create(&newKelas).Error; err != nil {
+		return newKelas, fmt.Errorf("failed to insert data into kelas: %w", err)
 	}
 
-	// Return the newly created category
-	return newTask, nil
+	return newKelas, nil
 }
+
+// GetKelas retrieves all Kelas from the database
 func GetKelas() ([]models.Kelas, error) {
-	var newTask []models.Kelas
+	var kelasList []models.Kelas
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
-		return newTask, err
+		return kelasList, err
 	}
 
-	db.Find(&newTask)
+	// Retrieve all classes
+	if err := db.Find(&kelasList).Error; err != nil {
+		return kelasList, fmt.Errorf("failed to retrieve classes: %w", err)
+	}
 
-	return newTask, nil
+	return kelasList, nil
 }
+
+// DeleteKelas deletes a Kelas by its ID
 func DeleteKelas(id string) error {
-	var newTask models.Kelas
+	var kelas models.Kelas
 
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-
+	// Get DB connection
+	db, err := GetDBConnection()
 	if err != nil {
 		return err
 	}
 
-	db.Where("ID = ?", id).Delete(&newTask)
-	return nil
-
-}
-func UpdateKelas(name string, description string, id string) (models.Kelas, error) {
-	var newTask = models.Kelas{Name: name, Description: description}
-
-	db, err := gorm.Open(postgres.Open(Dsn), &gorm.Config{})
-	if err != nil {
-		return newTask, err
+	// Delete the class by ID
+	if err := db.Where("ID = ?", id).Delete(&kelas).Error; err != nil {
+		return fmt.Errorf("failed to delete class: %w", err)
 	}
 
-	db.Where("ID = ?", id).Updates(&models.Kelas{Name: newTask.Name, Description: newTask.Description})
-	return newTask, nil
+	return nil
+}
+
+// UpdateKelas updates an existing Kelas in the database
+func UpdateKelas(name string, description string, id string) (models.Kelas, error) {
+	var updatedKelas = models.Kelas{Name: name, Description: description}
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		return updatedKelas, err
+	}
+
+	// Update the class details
+	if err := db.Where("ID = ?", id).Updates(&updatedKelas).Error; err != nil {
+		return updatedKelas, fmt.Errorf("failed to update class: %w", err)
+	}
+
+	return updatedKelas, nil
 }

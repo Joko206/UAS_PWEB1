@@ -32,51 +32,54 @@ func Setup(app *fiber.App) {
 	api.Get("/login", controllers.Login)
 	api.Get("/logout", controllers.Logout)
 
-	// Kategori Routes
-	kategori := app.Group("/kategori", AuthMiddleware)
+	// Kategori Routes (Only Admin)
+	kategori := app.Group("/kategori", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))
 	kategori.Get("/get-kategori", controllers.GetKategori)
 	kategori.Post("/add-kategori", controllers.AddKategori)
 	kategori.Patch("/update-kategori/:id", controllers.UpdateKategori)
 	kategori.Delete("/delete-kategori/:id", controllers.DeleteKategori)
 
-	// Tingkatan Routes
-	tingkatan := app.Group("/tingkatan", AuthMiddleware)
+	// Tingkatan Routes (Only Admin and Teacher)
+	tingkatan := app.Group("/tingkatan", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))
 	tingkatan.Get("/get-tingkatan", controllers.GetTingkatan)
 	tingkatan.Post("/add-tingkatan", controllers.AddTingkatan)
 	tingkatan.Patch("/update-tingkatan", controllers.UpdateTingkatan)
 	tingkatan.Delete("/delete-tingkatan", controllers.DeleteTingkatan)
 
-	// Kelas Routes
+	// Kelas Routes (Admin, Teacher, Student)
 	kelas := app.Group("/kelas", AuthMiddleware)
 	kelas.Get("/get-kelas", controllers.GetKelas)
-	kelas.Post("/add-kelas", controllers.AddKelas)
-	kelas.Patch("/update-kelas", controllers.UpdateKelas)
-	kelas.Delete("/delete-kelas", controllers.DeleteKelas)
+	kelas.Post("/add-kelas", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddKelas)
+	kelas.Patch("/update-kelas", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateKelas)
+	kelas.Delete("/delete-kelas", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteKelas)
 	kelas.Post("/join-kelas", controllers.JoinKelas)
+	kelas.Get("/get-kelas-by-user", controllers.GetKelasByUserID)
 
-	// Kuis Routes
+	// Kuis Routes (Admin, Teacher)
 	kuis := app.Group("/kuis", AuthMiddleware)
 	kuis.Get("/get-kuis", controllers.GetKuis)
-	kuis.Post("/add-kuis", controllers.AddKuis)
-	kuis.Patch("/update-kuis", controllers.UpdateKuis)
-	kuis.Delete("/delete-kuis", controllers.DeleteKuis)
+	kuis.Post("/add-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddKuis)
+	kuis.Patch("/update-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateKuis)
+	kuis.Delete("/delete-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteKuis)
+	kuis.Get("/filter-kuis", controllers.FilterKuis)
 
-	// Soal Routes
+	// Soal Routes (Admin, Teacher)
 	soal := app.Group("/soal", AuthMiddleware)
 	soal.Get("/get-soal", controllers.GetSoal)
-	soal.Post("/add-soal", controllers.AddSoal)
-	soal.Patch("/update-soal", controllers.UpdateSoal)
-	soal.Delete("/delete-soal", controllers.DeleteSoal)
+	soal.Get("/get-soal/:kuis_id", controllers.GetSoalByKuisID)
+	soal.Post("/add-soal", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddSoal)
+	soal.Patch("/update-soal", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateSoal)
+	soal.Delete("/delete-soal", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteSoal)
 
-	// Pendidikan Routes
-	pendidikan := app.Group("/pendidikan", AuthMiddleware)
+	// Pendidikan Routes (Only Admin)
+	pendidikan := app.Group("/pendidikan", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))
 	pendidikan.Get("/get-pendidikan", controllers.GetPendidikan)
 	pendidikan.Post("/add-pendidikan", controllers.AddPendidikan)
 	pendidikan.Patch("/update-pendidikan", controllers.UpdatePendidikan)
 	pendidikan.Delete("/delete-pendidikan", controllers.DeletePendidikan)
 
-	// Hasil Kuis Routes
+	// Hasil Kuis Routes (Admin, Teacher, Student)
 	result := app.Group("/hasil-kuis", AuthMiddleware)
-	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis)
-	result.Post("/submit-jawaban", controllers.SubmitJawaban)
+	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis) // Accessible by Admin, Teacher, and Student
+	result.Post("/submit-jawaban", controllers.SubmitJawaban)  // Accessible by Student
 }

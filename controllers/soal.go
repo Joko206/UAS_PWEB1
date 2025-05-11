@@ -76,3 +76,23 @@ func DeleteSoal(c *fiber.Ctx) error {
 
 	return sendResponse(c, fiber.StatusOK, true, "Soal deleted successfully", nil)
 }
+func GetSoalByKuisID(c *fiber.Ctx) error {
+	// Ambil kuis_id dari parameter request
+	kuisID := c.Params("kuis_id")
+
+	// Cek apakah kuis_id valid
+	var kuis models.Kuis
+	err := database.DB.First(&kuis, kuisID).Error
+	if err != nil {
+		return sendResponse(c, fiber.StatusNotFound, false, "Kuis not found", nil)
+	}
+
+	// Ambil soal-soal yang terkait dengan kuis_id
+	var soal []models.Soal
+	err = database.DB.Where("kuis_id = ?", kuisID).Find(&soal).Error
+	if err != nil {
+		return sendResponse(c, fiber.StatusInternalServerError, false, "Failed to fetch questions", nil)
+	}
+
+	return sendResponse(c, fiber.StatusOK, true, "Soal retrieved successfully", soal)
+}

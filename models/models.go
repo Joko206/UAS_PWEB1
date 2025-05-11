@@ -11,6 +11,7 @@ type Users struct {
 	Name     string `json:"name"`
 	Email    string `json:"email" gorm:"unique"`
 	Password []byte `json:"-"`
+	Role     string `json:"role"`
 }
 type Kategori_Soal struct {
 	gorm.Model

@@ -102,3 +102,37 @@ func DeleteKuis(c *fiber.Ctx) error {
 
 	return sendResponse(c, fiber.StatusOK, true, "Quiz deleted successfully", nil)
 }
+func FilterKuis(c *fiber.Ctx) error {
+	// Ambil parameter dari query string
+	kategoriID := c.Query("kategori_id")     // Misalnya ?kategori_id=1
+	tingkatanID := c.Query("tingkatan_id")   // Misalnya ?tingkatan_id=1
+	pendidikanID := c.Query("pendidikan_id") // Misalnya ?pendidikan_id=1
+
+	// Membuat query untuk filter
+	var kuis []models.Kuis
+	query := database.DB.Model(&models.Kuis{})
+
+	// Jika kategori_id disediakan, filter berdasarkan kategori_id
+	if kategoriID != "" {
+		query = query.Where("kategori_id = ?", kategoriID)
+	}
+
+	// Jika tingkatan_id disediakan, filter berdasarkan tingkatan_id
+	if tingkatanID != "" {
+		query = query.Where("tingkatan_id = ?", tingkatanID)
+	}
+
+	// Jika pendidikan_id disediakan, filter berdasarkan pendidikan_id
+	if pendidikanID != "" {
+		query = query.Where("pendidikan_id = ?", pendidikanID)
+	}
+
+	// Menjalankan query untuk mendapatkan kuis yang sesuai dengan filter
+	err := query.Find(&kuis).Error
+	if err != nil {
+		return sendResponse(c, fiber.StatusInternalServerError, false, "Failed to fetch quizzes", nil)
+	}
+
+	// Mengembalikan daftar kuis yang telah difilter
+	return sendResponse(c, fiber.StatusOK, true, "Filtered quizzes retrieved successfully", kuis)
+}

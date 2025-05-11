@@ -37,6 +37,35 @@ func Authenticate(c *fiber.Ctx) (*models.Users, error) {
 
 	return &user, nil
 }
+
+func RoleMiddleware(allowedRoles []string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		user, err := Authenticate(c)
+		if err != nil {
+			return err
+		}
+
+		// Check if the user role is allowed
+		roleAllowed := false
+		for _, role := range allowedRoles {
+			if user.Role == role {
+				roleAllowed = true
+				break
+			}
+		}
+
+		if !roleAllowed {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"data":    nil,
+				"success": false,
+				"message": "You don't have permission to access this resource",
+			})
+		}
+
+		return c.Next()
+	}
+}
+
 func Register(c *fiber.Ctx) error {
 	var data map[string]string
 
@@ -45,13 +74,29 @@ func Register(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	// Hash password before saving
-	password, _ := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	// Default role is "student" if not provided
+	role := data["role"]
+	if role == "" {
+		role = "student" // Default role
+	}
 
+	// Validate that the role is one of the allowed values
+	if role != "admin" && role != "teacher" && role != "student" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid role. Allowed roles: admin, teacher, student", nil)
+	}
+
+	// Hash password before saving
+	password, err := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	if err != nil {
+		return sendResponse(c, fiber.StatusInternalServerError, false, "Error hashing password", nil)
+	}
+
+	// Create user with the role
 	user := models.Users{
 		Name:     data["name"],
 		Email:    data["email"],
 		Password: password,
+		Role:     role, // Set the role here
 	}
 
 	// Save user to the database
@@ -59,8 +104,10 @@ func Register(c *fiber.Ctx) error {
 		return handleError(c, err, "Failed to register user")
 	}
 
+	// Return success response
 	return sendResponse(c, fiber.StatusOK, true, "User registered successfully", user)
 }
+
 func Login(c *fiber.Ctx) error {
 	var data map[string]string
 

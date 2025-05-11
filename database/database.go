@@ -28,5 +28,5 @@ func DBconn() {
 	}
 	DB = db
 
-	db.AutoMigrate(&models.Users{}, &models.Kategori_Soal{}, &models.Tingkatan{}, models.Kelas{}, models.Kuis{}, models.Soal{}, models.Pendidikan{}, models.Hasil_Kuis{}, models.SoalAnswer{})
+	db.AutoMigrate(&models.Users{}, &models.Kategori_Soal{}, &models.Tingkatan{}, &models.Kelas{}, &models.Kuis{}, &models.Soal{}, &models.Pendidikan{}, &models.Hasil_Kuis{}, &models.SoalAnswer{}, &models.Kelas_Pengguna{})
 }

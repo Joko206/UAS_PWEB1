@@ -76,3 +76,10 @@ type SoalAnswer struct {
 	User_id uint   `json:"user_id"`
 	User    Users  `gorm:"foreignKey:User_id;constraint:OnDelete:CASCADE;"`
 }
+type Kelas_Pengguna struct {
+	gorm.Model
+	Users_id uint  `json:"users_id"`
+	Users    Users `gorm:"foreignKey:Users_id;constraint:OnDelete:CASCADE;"`
+	Kelas_id uint  `json:"kelas_id"`
+	Kelas    Kelas `gorm:"foreignKey:Kelas_id;constraint:OnDelete:CASCADE;"`
+}

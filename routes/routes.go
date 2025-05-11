@@ -62,6 +62,7 @@ func Setup(app *fiber.App) {
 	kelas.Post("/add-kelas", controllers.AddKelas)
 	kelas.Patch("/update-kelas", controllers.UpdateKelas)
 	kelas.Delete("/delete-kelas", controllers.DeleteKelas)
+	kelas.Post("/join-kelas", controllers.JoinKelas)
 
 	Kuis := app.Group("/kuis")
 

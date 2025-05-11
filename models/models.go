@@ -12,36 +12,36 @@ type Users struct {
 	Email    string `json:"email" gorm:"unique"`
 	Password []byte `json:"-"`
 }
-type Pendidikan struct {
-	gorm.Model
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
 type Kategori_Soal struct {
 	gorm.Model
+	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Tingkatan struct {
 	gorm.Model
+	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Kelas struct {
 	gorm.Model
+	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Kuis struct {
 	gorm.Model
-	Title        string        `json:"title"`
-	Description  string        `json:"description"`
-	Kategori_id  uint          `json:"kategori_id"    `                                     // Gunakan tipe uint untuk Kategori_id
-	Kategori     Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"` //Menambahkan constraint foreign key
-	Tingkatan_id uint          `json:"tingkatan_id"`
-	Tingkatan    Tingkatan     `gorm:"foreignKey:Tingkatan_id;constraint:OnDelete:CASCADE;"`
-	Kelas_id     uint          `json:"kelas_id"`
-	Kelas        Kelas         `gorm:"foreignKey:Kelas_id;constraint:OnDelete:CASCADE;"`
+	Title         string        `json:"title"`
+	Description   string        `json:"description"`
+	Kategori_id   uint          `json:"kategori_id"    `                                     // Gunakan tipe uint untuk Kategori_id
+	Kategori      Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"` //Menambahkan constraint foreign key
+	Tingkatan_id  uint          `json:"tingkatan_id"`
+	Tingkatan     Tingkatan     `gorm:"foreignKey:Tingkatan_id;constraint:OnDelete:CASCADE;"`
+	Kelas_id      uint          `json:"kelas_id"`
+	Kelas         Kelas         `gorm:"foreignKey:Kelas_id;constraint:OnDelete:CASCADE;"`
+	Pendidikan_id uint          `json:"pendidikan_id"`
+	Pendidikan    Pendidikan    `gorm:"foreignKey:Pendidikan_id;constraint:OnDelete:CASCADE;"`
 }
 
 type Soal struct {
@@ -50,5 +50,29 @@ type Soal struct {
 	Options        json.RawMessage `json:"options_json"`
 	Correct_answer string          `json:"correct_answer"`
 	Kuis_id        uint            `json:"kuis_id"`
-	Kuis           Kuis            `gorm:"foreignKey:Kuis_id"`
+	Kuis           Kuis            `gorm:"foreignKey:Kuis_id;constraint:OnDelete:CASCADE;"`
+}
+
+type Pendidikan struct {
+	gorm.Model
+	id          uint   `gorm:"primaryKey"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+type Hasil_Kuis struct {
+	gorm.Model
+	Users_id       uint  `json:"users_id"`
+	Users          Users `gorm:"foreignKey:Users_id;constraint:OnDelete:CASCADE;"`
+	Kuis_id        uint  `json:"kuis_id"`
+	Kuis           Kuis  `gorm:"foreignKey:Kuis_id;constraint:OnDelete:CASCADE;"`
+	Score          uint  `json:"score"`
+	Correct_Answer uint  `json:"correct_answer;constraint:OnDelete:CASCADE;"`
+}
+type SoalAnswer struct {
+	gorm.Model
+	Soal_id uint   `json:"soal_id"`
+	Soal    Soal   `gorm:"foreignKey:Soal_id;constraint:OnDelete:CASCADE;"`
+	Answer  string `json:"answer"`
+	User_id uint   `json:"user_id"`
+	User    Users  `gorm:"foreignKey:User_id;constraint:OnDelete:CASCADE;"`
 }

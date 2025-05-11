@@ -35,7 +35,6 @@ func GetKuis(c *fiber.Ctx) error {
 
 // Fungsi untuk menambahkan Kuis
 func AddKuis(c *fiber.Ctx) error {
-
 	var db *gorm.DB
 	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
 	if err != nil {
@@ -48,6 +47,7 @@ func AddKuis(c *fiber.Ctx) error {
 		return err
 	}
 
+	// Parse body for the new Kuis
 	newKuis := new(models.Kuis)
 	err = c.BodyParser(newKuis)
 	if err != nil {
@@ -68,7 +68,28 @@ func AddKuis(c *fiber.Ctx) error {
 		})
 	}
 
-	// Lanjutkan dengan operasi database jika kategori valid
+	// Lanjutkan dengan pengecekan Tingkatan
+	var tingkatan models.Tingkatan
+	if err := db.First(&tingkatan, newKuis.Tingkatan_id).Error; err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"data":    nil,
+			"success": false,
+			"message": "Invalid Tingkatan ID",
+		})
+	}
+
+	// Lanjutkan dengan pengecekan Kelas
+	var kelas models.Kelas
+	if err := db.First(&kelas, newKuis.Kelas_id).Error; err != nil {
+		return c.Status(400).JSON(&fiber.Map{
+			"data":    nil,
+			"success": false,
+			"message": "Invalid Kelas ID",
+		})
+	}
+
+	// Setelah validasi, masukkan data Kuis
+	// Pastikan relasi terkait di-insert dengan benar
 	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id)
 	if err != nil {
 		return c.Status(400).JSON(&fiber.Map{
@@ -78,6 +99,7 @@ func AddKuis(c *fiber.Ctx) error {
 		})
 	}
 
+	// Menyertakan relasi di response
 	return c.Status(200).JSON(&fiber.Map{
 		"data":    result,
 		"success": true,

@@ -53,6 +53,11 @@ func GetKuis() ([]models.Kuis, error) {
 		return newTask, err
 	}
 
+	err = db.Preload("Kategori").Preload("Tingkatan").Preload("Kelas").Find(&newTask).Error
+	if err != nil {
+		return newTask, err
+	}
+
 	db.Find(&newTask)
 
 	return newTask, nil

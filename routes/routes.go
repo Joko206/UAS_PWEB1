@@ -108,4 +108,11 @@ func Setup(app *fiber.App) {
 	Pendidikan.Patch("/update-pendidikan", controllers.UpdatePendidikan)
 	Pendidikan.Delete("/delete-pendidikan", controllers.DeletePendidikan)
 
+	// Route untuk mengambil hasil kuis berdasarkan user_id dan kuis_id
+	result := app.Group("/hasil-kuis")
+
+	// Mendapatkan hasil kuis berdasarkan user_id dan kuis_id
+	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis)
+	result.Post("/submit-jawaban", controllers.SubmitJawaban)
+
 }

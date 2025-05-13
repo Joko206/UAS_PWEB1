@@ -86,8 +86,6 @@ func GetSoalByKuisID(c *fiber.Ctx) error {
 	if err != nil {
 		return sendResponse(c, fiber.StatusNotFound, false, "Kuis not found", nil)
 	}
-
-	// Ambil soal-soal yang terkait dengan kuis_id
 	var soal []models.Soal
 	err = database.DB.Where("kuis_id = ?", kuisID).Find(&soal).Error
 	if err != nil {

@@ -91,12 +91,11 @@ func Register(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusInternalServerError, false, "Error hashing password", nil)
 	}
 
-	// Create user with the role
 	user := models.Users{
 		Name:     data["name"],
 		Email:    data["email"],
 		Password: password,
-		Role:     role, // Set the role here
+		Role:     role,
 	}
 
 	// Save user to the database

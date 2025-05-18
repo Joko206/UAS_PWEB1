@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"strconv"
 	"time"
 )
@@ -71,40 +72,48 @@ func Register(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&data); err != nil {
+		log.Printf("Error parsing body: %v", err)
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	// Default role is "student" if not provided
-	role := data["role"]
-	if role == "" {
-		role = "student" // Default role
+	// Validasi jika name, email, atau password kosong
+	if data["name"] == "" || data["email"] == "" || data["password"] == "" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Name, email, and password are required", nil)
 	}
 
-	// Validate that the role is one of the allowed values
+	// Default role adalah "student" jika tidak ada
+	role := data["role"]
+	if role == "" {
+		role = "student" // Role default
+	}
+
+	// Validasi role yang diizinkan
 	if role != "admin" && role != "teacher" && role != "student" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid role. Allowed roles: admin, teacher, student", nil)
 	}
 
-	// Hash password before saving
+	// Hash password sebelum disimpan
 	password, err := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 	if err != nil {
+		log.Printf("Error hashing password: %v", err)
 		return sendResponse(c, fiber.StatusInternalServerError, false, "Error hashing password", nil)
 	}
 
-	// Create user with the role
+	// Buat user baru
 	user := models.Users{
 		Name:     data["name"],
 		Email:    data["email"],
 		Password: password,
-		Role:     role, // Set the role here
+		Role:     role,
 	}
 
-	// Save user to the database
+	// Simpan user ke database
 	if err := database.DB.Create(&user).Error; err != nil {
+		log.Printf("Failed to register user: %v", err)
 		return handleError(c, err, "Failed to register user")
 	}
 
-	// Return success response
+	// Kirim response sukses
 	return sendResponse(c, fiber.StatusOK, true, "User registered successfully", user)
 }
 
@@ -149,6 +158,7 @@ func Login(c *fiber.Ctx) error {
 
 	return sendResponse(c, fiber.StatusOK, true, "Login successful", fiber.Map{
 		"token": token,
+		"role":  user.Role,
 	})
 }
 

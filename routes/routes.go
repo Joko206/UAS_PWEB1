@@ -32,14 +32,12 @@ func Setup(app *fiber.App) {
 	api.Post("/login", controllers.Login)
 	api.Get("/logout", controllers.Logout)
 
-	// Kategori Routes (Only Admin)
 	kategori := app.Group("/kategori", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))
 	kategori.Get("/get-kategori", controllers.GetKategori)
 	kategori.Post("/add-kategori", controllers.AddKategori)
 	kategori.Patch("/update-kategori/:id", controllers.UpdateKategori)
 	kategori.Delete("/delete-kategori/:id", controllers.DeleteKategori)
 
-	// Tingkatan Routes (Only Admin and Teacher)
 	tingkatan := app.Group("/tingkatan", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))
 	tingkatan.Get("/get-tingkatan", controllers.GetTingkatan)
 	tingkatan.Post("/add-tingkatan", controllers.AddTingkatan)
@@ -80,6 +78,6 @@ func Setup(app *fiber.App) {
 
 	// Hasil Kuis Routes (Admin, Teacher, Student)
 	result := app.Group("/hasil-kuis", AuthMiddleware)
-	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis) // Accessible by Admin, Teacher, and Student
-	result.Post("/submit-jawaban", controllers.SubmitJawaban)  // Accessible by Student
+	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis)
+	result.Post("/submit-jawaban", controllers.SubmitJawaban)
 }

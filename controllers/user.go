@@ -151,7 +151,7 @@ func Login(c *fiber.Ctx) error {
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    token,
-		Expires:  time.Now().Add(time.Hour * 24),
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
 		HTTPOnly: true,
 	}
 	c.Cookie(&cookie)

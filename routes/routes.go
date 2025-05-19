@@ -57,8 +57,8 @@ func Setup(app *fiber.App) {
 	kuis := app.Group("/kuis", AuthMiddleware)
 	kuis.Get("/get-kuis", controllers.GetKuis)
 	kuis.Post("/add-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddKuis)
-	kuis.Patch("/update-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateKuis)
-	kuis.Delete("/delete-kuis", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteKuis)
+	kuis.Patch("/update-kuis/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateKuis)
+	kuis.Delete("/delete-kuis/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteKuis)
 	kuis.Get("/filter-kuis", controllers.FilterKuis)
 
 	// Soal Routes (Admin, Teacher)

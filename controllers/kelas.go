@@ -8,6 +8,10 @@ import (
 
 func GetKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	result, err := database.GetKelas()
 	if err != nil {
@@ -19,6 +23,10 @@ func GetKelas(c *fiber.Ctx) error {
 
 func AddKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	newKategori := new(models.Kelas)
 	if err := c.BodyParser(newKategori); err != nil {
@@ -35,6 +43,10 @@ func AddKelas(c *fiber.Ctx) error {
 
 func UpdateKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	id := c.Params("id")
 	if id == "" {
@@ -56,13 +68,17 @@ func UpdateKelas(c *fiber.Ctx) error {
 
 func DeleteKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err := database.DeleteKelas(id)
+	err = database.DeleteKelas(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete class")
 	}

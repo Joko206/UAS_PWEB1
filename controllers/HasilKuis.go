@@ -10,8 +10,14 @@ import (
 )
 
 func SubmitJawaban(c *fiber.Ctx) error {
+
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error connecting to the database: ", err)
 	}

@@ -6,13 +6,14 @@ import (
 )
 
 // CreateKuis creates a new Kuis in the database
-func CreateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint) (models.Kuis, error) {
+func CreateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, pendidikan uint) (models.Kuis, error) {
 	var newKuis = models.Kuis{
-		Title:        title,
-		Description:  description,
-		Kategori_id:  kategori,
-		Tingkatan_id: tingkatan,
-		Kelas_id:     kelas,
+		Title:         title,
+		Description:   description,
+		Kategori_id:   kategori,
+		Tingkatan_id:  tingkatan,
+		Kelas_id:      kelas,
+		Pendidikan_id: pendidikan,
 	}
 
 	// Get DB connection
@@ -34,6 +35,11 @@ func CreateKuis(title string, description string, kategori uint, tingkatan uint,
 
 	var kelasObj models.Kelas
 	if err := db.First(&kelasObj, kelas).Error; err != nil {
+		return newKuis, fmt.Errorf("Invalid Kelas ID")
+	}
+
+	var pendidikanObj models.Kelas
+	if err := db.First(&pendidikanObj, pendidikan).Error; err != nil {
 		return newKuis, fmt.Errorf("Invalid Kelas ID")
 	}
 

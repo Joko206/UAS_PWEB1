@@ -67,7 +67,7 @@ func Setup(app *fiber.App) {
 	soal.Get("/get-soal/:kuis_id", controllers.GetSoalByKuisID)
 	soal.Post("/add-soal", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddSoal)
 	soal.Patch("/update-soal/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateSoal)
-	soal.Delete("/delete-soal:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteSoal)
+	soal.Delete("/delete-soal/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteSoal)
 
 	// Pendidikan Routes (Only Admin)
 	pendidikan := app.Group("/pendidikan", AuthMiddleware, controllers.RoleMiddleware([]string{"admin"}))

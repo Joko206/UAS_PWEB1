@@ -136,8 +136,9 @@ func FilterKuis(c *fiber.Ctx) error {
 	}
 
 	// Ambil parameter dari query string
-	kategoriID := c.Query("kategori_id")     // Misalnya ?kategori_id=1
-	tingkatanID := c.Query("tingkatan_id")   // Misalnya ?tingkatan_id=1
+	kategoriID := c.Query("kategori_id")   // Misalnya ?kategori_id=1
+	tingkatanID := c.Query("tingkatan_id") // Misalnya ?tingkatan_id=1
+	kelasID := c.Query("kelas_id")
 	pendidikanID := c.Query("pendidikan_id") // Misalnya ?pendidikan_id=1
 
 	// Membuat query untuk filter
@@ -152,6 +153,10 @@ func FilterKuis(c *fiber.Ctx) error {
 	// Jika tingkatan_id disediakan, filter berdasarkan tingkatan_id
 	if tingkatanID != "" {
 		query = query.Where("tingkatan_id = ?", tingkatanID)
+	}
+
+	if kelasID != "" {
+		query = query.Where("kelas_id = ?", kelasID)
 	}
 
 	// Jika pendidikan_id disediakan, filter berdasarkan pendidikan_id

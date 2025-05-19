@@ -10,7 +10,7 @@ type Users struct {
 	id       uint   `gorm:"primaryKey"`
 	Name     string `json:"name" gorm:"column:name;not null"` // Pastikan kolom 'name' ada di database
 	Email    string `json:"email" gorm:"unique;not null"`
-	Password []byte `json:"-" gorm:"not null"`
+	Password []byte `json:"password" gorm:"not null"`
 	Role     string `json:"role"`
 }
 type Kategori_Soal struct {

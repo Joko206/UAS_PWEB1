@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
@@ -8,34 +9,54 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 )
 
 // Secret key for JWT
 const SecretKey = "secret"
 
-// Helper function to authenticate using JWT
 func Authenticate(c *fiber.Ctx) (*models.Users, error) {
-	cookie := c.Cookies("jwt")
-	if cookie == "" {
-		return nil, fiber.NewError(fiber.StatusUnauthorized, "No JWT token found")
+	// 🔍 Coba ambil token dari header Authorization
+	token := c.Get("Authorization")
+
+	if token == "" {
+		// 🔍 Jika tidak ada di header, ambil dari cookie
+		token = c.Cookies("jwt")
+		if token == "" {
+			fmt.Println("🔥 Token tidak ditemukan di header maupun cookie")
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "No JWT token found")
+		}
 	}
 
-	token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// 🔍 Cek apakah ada prefix "Bearer"
+	if strings.HasPrefix(token, "Bearer ") {
+		token = strings.TrimPrefix(token, "Bearer ")
+	}
+
+	// 🔍 Parsing Token
+	parsedToken, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
 	})
 
-	if err != nil || !token.Valid {
+	if err != nil || !parsedToken.Valid {
+		fmt.Println("🔥 Token tidak valid atau expired:", err)
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid or expired token")
 	}
 
-	claims := token.Claims.(*jwt.StandardClaims)
+	// 🔍 Ambil klaim dari token
+	claims := parsedToken.Claims.(*jwt.StandardClaims)
+
+	// 🔍 Cari user di database berdasarkan ID di klaim
 	var user models.Users
-	database.DB.Where("id = ?", claims.Issuer).First(&user)
-	if user.ID == 0 {
+	result := database.DB.Where("id = ?", claims.Issuer).First(&user)
+
+	if result.Error != nil {
+		fmt.Println("🔥 User tidak ditemukan di database")
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "User not found")
 	}
 
+	fmt.Println("✅ User ditemukan:", user.Name)
 	return &user, nil
 }
 

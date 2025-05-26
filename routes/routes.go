@@ -46,12 +46,12 @@ func Setup(app *fiber.App) {
 
 	// Kelas Routes (Admin, Teacher, Student)
 	kelas := app.Group("/kelas", AuthMiddleware)
-	kelas.Get("/get-kelas", controllers.RoleMiddleware([]string{"admin", "teacher, student"}), controllers.GetKelas)
+	kelas.Get("/get-kelas", controllers.RoleMiddleware([]string{"admin", "teacher", "student"}), controllers.GetKelas)
 	kelas.Post("/add-kelas", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.AddKelas)
 	kelas.Patch("/update-kelas/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.UpdateKelas)
 	kelas.Delete("/delete-kelas/:id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.DeleteKelas)
-	kelas.Post("/join-kelas", controllers.RoleMiddleware([]string{"admin", "teacher, student"}), controllers.JoinKelas)
-	kelas.Get("/get-kelas-by-user", controllers.RoleMiddleware([]string{"admin", "teacher, student"}), controllers.GetKelasByUserID)
+	kelas.Post("/join-kelas", controllers.RoleMiddleware([]string{"admin", "teacher", "student"}), controllers.JoinKelas)
+	kelas.Get("/get-kelas-by-user", controllers.RoleMiddleware([]string{"admin", "teacher", "student"}), controllers.GetKelasByUserID)
 
 	// Kuis Routes (Admin, Teacher)
 	kuis := app.Group("/kuis", AuthMiddleware)

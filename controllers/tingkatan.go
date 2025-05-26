@@ -8,6 +8,10 @@ import (
 
 func GetTingkatan(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	result, err := database.GetTingkatan()
 	if err != nil {
@@ -20,10 +24,14 @@ func GetTingkatan(c *fiber.Ctx) error {
 func AddTingkatan(c *fiber.Ctx) error {
 
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	// Parse body request for new Tingkatan
 	newTingkatan := new(models.Tingkatan)
-	err := c.BodyParser(newTingkatan)
+	err = c.BodyParser(newTingkatan)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -38,6 +46,12 @@ func AddTingkatan(c *fiber.Ctx) error {
 }
 
 func UpdateTingkatan(c *fiber.Ctx) error {
+
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
@@ -45,7 +59,7 @@ func UpdateTingkatan(c *fiber.Ctx) error {
 
 	// Parse body request for updated Tingkatan
 	newTingkatan := new(models.Tingkatan)
-	err := c.BodyParser(newTingkatan)
+	err = c.BodyParser(newTingkatan)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -61,13 +75,18 @@ func UpdateTingkatan(c *fiber.Ctx) error {
 
 func DeleteTingkatan(c *fiber.Ctx) error {
 
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
 	// Delete Tingkatan
-	err := database.DeleteTingkatan(id)
+	err = database.DeleteTingkatan(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete Tingkatan")
 	}

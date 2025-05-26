@@ -12,6 +12,11 @@ import (
 
 func GetKuis(c *fiber.Ctx) error {
 
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	result, err := database.GetKuis()
 	if err != nil {
 		return handleError(c, err, "Failed to retrieve quizzes")
@@ -21,8 +26,14 @@ func GetKuis(c *fiber.Ctx) error {
 }
 
 func AddKuis(c *fiber.Ctx) error {
+
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	db, err = gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Error connecting to the database: ", err)
 	}
@@ -57,8 +68,13 @@ func AddKuis(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kelas ID", nil)
 	}
 
+	var pendidikan models.Pendidikan
+	if err := db.First(&pendidikan, newKuis.Pendidikan_id).Error; err != nil {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kelas ID", nil)
+	}
+
 	// Create Kuis
-	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id)
+	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id, newKuis.Pendidikan_id)
 	if err != nil {
 		return handleError(c, err, "Failed to create quiz")
 	}
@@ -68,6 +84,11 @@ func AddKuis(c *fiber.Ctx) error {
 
 func UpdateKuis(c *fiber.Ctx) error {
 
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
@@ -75,7 +96,7 @@ func UpdateKuis(c *fiber.Ctx) error {
 
 	// Parse request body
 	newTask := new(models.Kuis)
-	err := c.BodyParser(newTask)
+	err = c.BodyParser(newTask)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -90,12 +111,17 @@ func UpdateKuis(c *fiber.Ctx) error {
 
 func DeleteKuis(c *fiber.Ctx) error {
 
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err := database.DeleteKuis(id)
+	err = database.DeleteKuis(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete quiz")
 	}
@@ -103,9 +129,16 @@ func DeleteKuis(c *fiber.Ctx) error {
 	return sendResponse(c, fiber.StatusOK, true, "Quiz deleted successfully", nil)
 }
 func FilterKuis(c *fiber.Ctx) error {
+
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	// Ambil parameter dari query string
-	kategoriID := c.Query("kategori_id")     // Misalnya ?kategori_id=1
-	tingkatanID := c.Query("tingkatan_id")   // Misalnya ?tingkatan_id=1
+	kategoriID := c.Query("kategori_id")   // Misalnya ?kategori_id=1
+	tingkatanID := c.Query("tingkatan_id") // Misalnya ?tingkatan_id=1
+	kelasID := c.Query("kelas_id")
 	pendidikanID := c.Query("pendidikan_id") // Misalnya ?pendidikan_id=1
 
 	// Membuat query untuk filter
@@ -122,13 +155,17 @@ func FilterKuis(c *fiber.Ctx) error {
 		query = query.Where("tingkatan_id = ?", tingkatanID)
 	}
 
+	if kelasID != "" {
+		query = query.Where("kelas_id = ?", kelasID)
+	}
+
 	// Jika pendidikan_id disediakan, filter berdasarkan pendidikan_id
 	if pendidikanID != "" {
 		query = query.Where("pendidikan_id = ?", pendidikanID)
 	}
 
 	// Menjalankan query untuk mendapatkan kuis yang sesuai dengan filter
-	err := query.Find(&kuis).Error
+	err = query.Find(&kuis).Error
 	if err != nil {
 		return sendResponse(c, fiber.StatusInternalServerError, false, "Failed to fetch quizzes", nil)
 	}

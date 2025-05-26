@@ -6,15 +6,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
 )
 
 func SubmitJawaban(c *fiber.Ctx) error {
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	_, err := Authenticate(c)
 	if err != nil {
-		log.Fatal("Error connecting to the database: ", err)
+		return err
 	}
+
+	// Gunakan database.DB yang sudah terkonfigurasi
+	db := database.DB
 
 	// Parse data dari body (jawaban yang diberikan oleh user)
 	var userAnswers []models.SoalAnswer
@@ -23,12 +24,12 @@ func SubmitJawaban(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	// Simpan jawaban pengguna ke dalam SoalAnswer
-	if err := db.Create(&userAnswers).Error; err != nil {
-		return handleError(c, err, "Failed to save answers")
+	// Validasi jika tidak ada jawaban yang diberikan
+	if len(userAnswers) == 0 {
+		return sendResponse(c, fiber.StatusBadRequest, false, "No answers provided", nil)
 	}
 
-	// Ambil soal terkait untuk mendapatkan kuis_id
+	// Ambil kuis_id dari soal pertama
 	soalID := userAnswers[0].Soal_id
 	var soal models.Soal
 	if err := db.First(&soal, soalID).Error; err != nil {
@@ -84,6 +85,7 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	// Kembalikan hasil
 	return sendResponse(c, fiber.StatusOK, true, "Kuis submitted successfully", result)
 }
+
 func GetHasilKuis(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	kuisID := c.Params("kuis_id")

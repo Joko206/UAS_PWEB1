@@ -18,11 +18,20 @@ import (
 )
 
 func main() {
+	log.Println("🚀 Starting BrainQuiz API...")
+
+	// Log environment variables for debugging
+	log.Printf("🔧 PORT: %s", getEnv("PORT", "8000"))
+	log.Printf("🔧 DATABASE_URL exists: %t", os.Getenv("DATABASE_URL") != "")
+	log.Printf("🔧 RAILWAY_ENVIRONMENT: %s", getEnv("RAILWAY_ENVIRONMENT", "not-set"))
+
 	// Initialize database connection
+	log.Println("🔌 Connecting to database...")
 	_, err := database.GetDBConnection()
 	if err != nil {
 		log.Fatalf("❌ Failed to connect to database: %v", err)
 	}
+	log.Println("✅ Database connected successfully")
 
 	// Create Fiber app with configuration
 	app := fiber.New(fiber.Config{

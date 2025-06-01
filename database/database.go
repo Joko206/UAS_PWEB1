@@ -19,19 +19,23 @@ var DB *gorm.DB
 func GetDSN() string {
 	// Try to get from environment variables first
 	if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
+		log.Printf("🔗 Using DATABASE_URL from environment")
 		return dsn
 	}
 
-	// Fallback to hardcoded values (for development only)
+	// Fallback to individual environment variables
 	host := getEnv("DB_HOST", "metro.proxy.rlwy.net")
 	port := getEnv("DB_PORT", "11951")
 	user := getEnv("DB_USER", "postgres")
 	password := getEnv("DB_PASSWORD", "VxYgKiPnPDgILDlzcYAxXOzEdOTUQxwh")
 	dbname := getEnv("DB_NAME", "railway")
-	sslmode := getEnv("DB_SSLMODE", "disable")
+	sslmode := getEnv("DB_SSLMODE", "require")
 
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=Asia/Jakarta",
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s TimeZone=Asia/Jakarta",
 		host, port, user, password, dbname, sslmode)
+
+	log.Printf("🔗 Using constructed DSN with host: %s:%s", host, port)
+	return dsn
 }
 
 // getEnv gets environment variable with fallback

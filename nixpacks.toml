@@ -1,0 +1,11 @@
+[providers.go]
+version = "1.23.0"
+
+[phases.build]
+cmds = [
+    "go mod download",
+    "go build -o main ."
+]
+
+[start]
+cmd = "./main"

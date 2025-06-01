@@ -10,4 +10,4 @@ restartPolicyMaxRetries = 3
 
 [variables]
 PORT = "8000"
-GO_VERSION = "1.21"
+GO_VERSION = "1.23.0"

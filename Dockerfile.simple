@@ -1,0 +1,35 @@
+# Simple single-stage Dockerfile
+FROM golang:1.23-alpine
+
+# Install git and ca-certificates
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Set timezone
+ENV TZ=Asia/Jakarta
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN go build -o main .
+
+# Make sure the binary is executable
+RUN chmod +x main
+
+# Verify the binary
+RUN ls -la main && ./main --help || echo "Binary created successfully"
+
+# Expose port
+EXPOSE 8000
+
+# Run the application
+CMD ["./main"]

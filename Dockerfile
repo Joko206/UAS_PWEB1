@@ -17,7 +17,10 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -ldflags="-w -s" -o main .
+
+# Verify the binary was created
+RUN ls -la main && file main
 
 # Final stage
 FROM alpine:latest
@@ -30,8 +33,15 @@ ENV TZ=Asia/Jakarta
 
 WORKDIR /root/
 
-# Copy the binary from builder stage
+# Copy the binary and start script from builder stage
 COPY --from=builder /app/main .
+COPY --from=builder /app/start.sh .
+
+# Make sure files are executable
+RUN chmod +x main start.sh
+
+# Verify the binary exists and is executable
+RUN ls -la main start.sh && file main
 
 # Expose port
 EXPOSE 8000
@@ -40,5 +50,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
 
-# Run the application
-CMD ["./main"]
+# Run the application using start script
+CMD ["./start.sh"]

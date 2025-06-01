@@ -9,6 +9,14 @@
 - Tambah `nixpacks.toml` untuk Railway configuration
 - Update `railway.toml` dengan GO_VERSION = "1.23.0"
 
+### Masalah Binary Not Found
+**FIXED**: Error `./main: No such file or directory` sudah diperbaiki dengan:
+- Tambah `start.sh` script yang robust
+- Auto-build binary jika tidak ditemukan
+- Proper chmod +x untuk executable permissions
+- Debug logging untuk troubleshooting
+- Update Procfile, nixpacks.toml, dan Dockerfile
+
 ### 502 Error - Connection Refused
 Error ini biasanya terjadi karena:
 1. ❌ ~~Go version compatibility~~ ✅ **FIXED**

@@ -4,8 +4,6 @@ import (
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func SubmitJawaban(c *fiber.Ctx) error {
@@ -15,7 +13,7 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	}
 
 	// Gunakan database.DB yang sudah terkonfigurasi
-	db := database.DB
+	db := database.MustGetDB()
 
 	// Parse data dari body (jawaban yang diberikan oleh user)
 	var userAnswers []models.SoalAnswer
@@ -30,14 +28,14 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	}
 
 	// Ambil kuis_id dari soal pertama
-	soalID := userAnswers[0].Soal_id
+	soalID := userAnswers[0].SoalID
 	var soal models.Soal
 	if err := db.First(&soal, soalID).Error; err != nil {
 		return handleError(c, err, "Invalid Soal ID")
 	}
 
 	// Ambil kuis_id dari soal yang terkait
-	kuisID := soal.Kuis_id
+	kuisID := soal.KuisID
 
 	// Dapatkan soal-soal yang terkait dengan kuis ini
 	var soalList []models.Soal
@@ -49,7 +47,7 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	var correctAnswers uint
 	for _, answer := range userAnswers {
 		for _, soal := range soalList {
-			if answer.Soal_id == soal.ID && answer.Answer == soal.Correct_answer {
+			if answer.SoalID == soal.ID && answer.Answer == soal.CorrectAnswer {
 				correctAnswers++
 			}
 		}
@@ -58,20 +56,20 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	// Hitung skor
 	score := correctAnswers * 10 // Misalnya 10 poin untuk setiap jawaban yang benar
 
-	// Simpan hasil kuis ke tabel Hasil_Kuis
-	result := models.Hasil_Kuis{
-		Users_id:       userAnswers[0].User_id,
-		Kuis_id:        kuisID,
-		Score:          score,
-		Correct_Answer: correctAnswers,
+	// Simpan hasil kuis ke tabel HasilKuis
+	result := models.HasilKuis{
+		UserID:        userAnswers[0].UserID,
+		KuisID:        kuisID,
+		Score:         score,
+		CorrectAnswer: correctAnswers,
 	}
 
 	// Cek apakah hasil sudah ada
-	var existingResult models.Hasil_Kuis
-	if err := db.Where("users_id = ? AND kuis_id = ?", userAnswers[0].User_id, kuisID).First(&existingResult).Error; err == nil {
+	var existingResult models.HasilKuis
+	if err := db.Where("user_id = ? AND kuis_id = ?", userAnswers[0].UserID, kuisID).First(&existingResult).Error; err == nil {
 		// Jika sudah ada, update hasil
 		existingResult.Score = score
-		existingResult.Correct_Answer = correctAnswers
+		existingResult.CorrectAnswer = correctAnswers
 		if err := db.Save(&existingResult).Error; err != nil {
 			return handleError(c, err, "Failed to update result")
 		}
@@ -90,15 +88,12 @@ func GetHasilKuis(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	kuisID := c.Params("kuis_id")
 
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
-	if err != nil {
-		return handleError(c, err, "Failed to connect to the database")
-	}
+	// Gunakan database connection yang sudah ada
+	db := database.MustGetDB()
 
 	// Cari hasil kuis berdasarkan user_id dan kuis_id
-	var hasilKuis models.Hasil_Kuis
-	if err := db.Where("users_id = ? AND kuis_id = ?", userID, kuisID).First(&hasilKuis).Error; err != nil {
+	var hasilKuis models.HasilKuis
+	if err := db.Where("user_id = ? AND kuis_id = ?", userID, kuisID).First(&hasilKuis).Error; err != nil {
 		return sendResponse(c, fiber.StatusNotFound, false, "Result not found", nil)
 	}
 

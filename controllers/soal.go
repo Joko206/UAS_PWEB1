@@ -8,9 +8,14 @@ import (
 
 func GetSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+	user, err := Authenticate(c)
 	if err != nil {
 		return err
+	}
+
+	// Check if user has permission (admin or teacher)
+	if user.Role != "admin" && user.Role != "teacher" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Only admin and teacher can view all questions", nil)
 	}
 
 	result, err := database.GetSoal()
@@ -22,11 +27,15 @@ func GetSoal(c *fiber.Ctx) error {
 }
 
 func AddSoal(c *fiber.Ctx) error {
-
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+	user, err := Authenticate(c)
 	if err != nil {
 		return err
+	}
+
+	// Check if user has permission (admin or teacher)
+	if user.Role != "admin" && user.Role != "teacher" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Only admin and teacher can add questions", nil)
 	}
 
 	// Parse body request for new Soal
@@ -36,8 +45,19 @@ func AddSoal(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
+	// Validate required fields
+	if newSoal.Question == "" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Question cannot be empty", nil)
+	}
+	if newSoal.CorrectAnswer == "" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Correct answer cannot be empty", nil)
+	}
+	if newSoal.KuisID == 0 {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Quiz ID cannot be empty", nil)
+	}
+
 	// Create Soal
-	result, err := database.CreateSoal(newSoal.Question, newSoal.Options, newSoal.Correct_answer, newSoal.Kuis_id)
+	result, err := database.CreateSoal(newSoal.Question, newSoal.Options, newSoal.CorrectAnswer, newSoal.KuisID)
 	if err != nil {
 		return handleError(c, err, "Failed to add soal")
 	}
@@ -47,9 +67,14 @@ func AddSoal(c *fiber.Ctx) error {
 
 func UpdateSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+	user, err := Authenticate(c)
 	if err != nil {
 		return err
+	}
+
+	// Check if user has permission (admin or teacher)
+	if user.Role != "admin" && user.Role != "teacher" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Only admin and teacher can update questions", nil)
 	}
 
 	id := c.Params("id")
@@ -65,7 +90,7 @@ func UpdateSoal(c *fiber.Ctx) error {
 	}
 
 	// Update Soal
-	result, err := database.UpdateSoal(newSoal.Question, newSoal.Options, newSoal.Correct_answer, newSoal.Kuis_id, id)
+	result, err := database.UpdateSoal(newSoal.Question, newSoal.Options, newSoal.CorrectAnswer, newSoal.KuisID, id)
 	if err != nil {
 		return handleError(c, err, "Failed to update soal")
 	}
@@ -74,9 +99,14 @@ func UpdateSoal(c *fiber.Ctx) error {
 }
 func DeleteSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
+	user, err := Authenticate(c)
 	if err != nil {
 		return err
+	}
+
+	// Check if user has permission (admin or teacher)
+	if user.Role != "admin" && user.Role != "teacher" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Only admin and teacher can delete questions", nil)
 	}
 
 	id := c.Params("id")
@@ -93,23 +123,30 @@ func DeleteSoal(c *fiber.Ctx) error {
 	return sendResponse(c, fiber.StatusOK, true, "Soal deleted successfully", nil)
 }
 func GetSoalByKuisID(c *fiber.Ctx) error {
-	// Ambil kuis_id dari parameter request
-
+	// Authenticate the user using the JWT token
 	_, err := Authenticate(c)
 	if err != nil {
 		return err
 	}
 
 	kuisID := c.Params("kuis_id")
+	if kuisID == "" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Kuis ID cannot be empty", nil)
+	}
+
+	// Use existing database connection
+	db := database.MustGetDB()
 
 	// Cek apakah kuis_id valid
 	var kuis models.Kuis
-	err = database.DB.First(&kuis, kuisID).Error
+	err = db.First(&kuis, kuisID).Error
 	if err != nil {
 		return sendResponse(c, fiber.StatusNotFound, false, "Kuis not found", nil)
 	}
+
+	// Get questions for the quiz - using the correct column name
 	var soal []models.Soal
-	err = database.DB.Where("kuis_id = ?", kuisID).Find(&soal).Error
+	err = db.Where("kuis_id = ?", kuisID).Find(&soal).Error
 	if err != nil {
 		return sendResponse(c, fiber.StatusInternalServerError, false, "Failed to fetch questions", nil)
 	}

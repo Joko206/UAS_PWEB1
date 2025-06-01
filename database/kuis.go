@@ -2,18 +2,19 @@ package database
 
 import (
 	"fmt"
+
 	"github.com/Joko206/UAS_PWEB1/models"
 )
 
 // CreateKuis creates a new Kuis in the database
 func CreateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, pendidikan uint) (models.Kuis, error) {
 	var newKuis = models.Kuis{
-		Title:         title,
-		Description:   description,
-		Kategori_id:   kategori,
-		Tingkatan_id:  tingkatan,
-		Kelas_id:      kelas,
-		Pendidikan_id: pendidikan,
+		Title:        title,
+		Description:  description,
+		KategoriID:   kategori,
+		TingkatanID:  tingkatan,
+		KelasID:      kelas,
+		PendidikanID: pendidikan,
 	}
 
 	// Get DB connection
@@ -90,11 +91,11 @@ func DeleteKuis(id string) error {
 // UpdateKuis updates an existing Kuis in the database
 func UpdateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, id string) (models.Kuis, error) {
 	var updatedKuis = models.Kuis{
-		Title:        title,
-		Description:  description,
-		Kategori_id:  kategori,
-		Tingkatan_id: tingkatan,
-		Kelas_id:     kelas,
+		Title:       title,
+		Description: description,
+		KategoriID:  kategori,
+		TingkatanID: tingkatan,
+		KelasID:     kelas,
 	}
 
 	// Get DB connection

@@ -86,6 +86,10 @@ func main() {
 	// Get port from environment or use default
 	port := getEnv("PORT", "8000")
 
+	// Log environment info for debugging
+	log.Printf("🌍 Environment: %s", getEnv("RAILWAY_ENVIRONMENT", "development"))
+	log.Printf("🔗 Database URL configured: %t", os.Getenv("DATABASE_URL") != "")
+
 	// Graceful shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -97,7 +101,9 @@ func main() {
 	}()
 
 	// Start server
-	log.Printf("🚀 Server starting on port %s", port)
+	log.Printf("🚀 Server starting on 0.0.0.0:%s", port)
+	log.Printf("🏥 Health check available at: http://0.0.0.0:%s/health", port)
+
 	if err := app.Listen("0.0.0.0:" + port); err != nil {
 		log.Fatalf("❌ Failed to start server: %v", err)
 	}

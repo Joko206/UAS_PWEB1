@@ -3,16 +3,15 @@ package database
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/Joko206/UAS_PWEB1/models"
 )
 
 func CreateSoal(question string, option json.RawMessage, correct_answer string, kuis_id uint) (models.Soal, error) {
 	var newSoal = models.Soal{
-		Question:      question,
-		Options:       option,
-		CorrectAnswer: correct_answer,
-		KuisID:        kuis_id,
+		Question:       question,
+		Options:        option,
+		Correct_answer: correct_answer,
+		Kuis_id:        kuis_id,
 	}
 
 	// Get DB connection
@@ -68,10 +67,10 @@ func DeleteSoal(id string) error {
 // UpdateSoal updates an existing Soal in the database
 func UpdateSoal(question string, option json.RawMessage, correct_answer string, kuis_id uint, id string) (models.Soal, error) {
 	var updatedSoal = models.Soal{
-		Question:      question,
-		Options:       option,
-		CorrectAnswer: correct_answer,
-		KuisID:        kuis_id,
+		Question:       question,
+		Options:        option,
+		Correct_answer: correct_answer,
+		Kuis_id:        kuis_id,
 	}
 
 	// Get DB connection

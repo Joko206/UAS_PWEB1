@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"log"
+
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func GetKuis(c *fiber.Ctx) error {
@@ -28,8 +32,16 @@ func AddKuis(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Use existing database connection
-	db := database.MustGetDB()
+	var db *gorm.DB
+	db, err = gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal("Error connecting to the database: ", err)
+	}
+
+	_, err = Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	// Parse request body
 	newKuis := new(models.Kuis)
@@ -40,29 +52,29 @@ func AddKuis(c *fiber.Ctx) error {
 
 	// Validate Kategori
 	var kategori models.Kategori_Soal
-	if err := db.First(&kategori, newKuis.KategoriID).Error; err != nil {
+	if err := db.First(&kategori, newKuis.Kategori_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kategori ID", nil)
 	}
 
 	// Validate Tingkatan
 	var tingkatan models.Tingkatan
-	if err := db.First(&tingkatan, newKuis.TingkatanID).Error; err != nil {
+	if err := db.First(&tingkatan, newKuis.Tingkatan_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Tingkatan ID", nil)
 	}
 
 	// Validate Kelas
 	var kelas models.Kelas
-	if err := db.First(&kelas, newKuis.KelasID).Error; err != nil {
+	if err := db.First(&kelas, newKuis.Kelas_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kelas ID", nil)
 	}
 
 	var pendidikan models.Pendidikan
-	if err := db.First(&pendidikan, newKuis.PendidikanID).Error; err != nil {
-		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Pendidikan ID", nil)
+	if err := db.First(&pendidikan, newKuis.Pendidikan_id).Error; err != nil {
+		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kelas ID", nil)
 	}
 
 	// Create Kuis
-	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.KategoriID, newKuis.TingkatanID, newKuis.KelasID, newKuis.PendidikanID)
+	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id, newKuis.Pendidikan_id)
 	if err != nil {
 		return handleError(c, err, "Failed to create quiz")
 	}
@@ -89,7 +101,7 @@ func UpdateKuis(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	result, err := database.UpdateKuis(newTask.Title, newTask.Description, newTask.KategoriID, newTask.TingkatanID, newTask.KelasID, id)
+	result, err := database.UpdateKuis(newTask.Title, newTask.Description, newTask.Kategori_id, newTask.Tingkatan_id, newTask.Kelas_id, id)
 	if err != nil {
 		return handleError(c, err, "Failed to update quiz")
 	}
@@ -131,8 +143,7 @@ func FilterKuis(c *fiber.Ctx) error {
 
 	// Membuat query untuk filter
 	var kuis []models.Kuis
-	db := database.MustGetDB()
-	query := db.Model(&models.Kuis{})
+	query := database.DB.Model(&models.Kuis{})
 
 	// Jika kategori_id disediakan, filter berdasarkan kategori_id
 	if kategoriID != "" {

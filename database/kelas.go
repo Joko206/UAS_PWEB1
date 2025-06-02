@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+
 	"github.com/Joko206/UAS_PWEB1/models"
 )
 
@@ -75,4 +76,27 @@ func UpdateKelas(name string, description string, id string) (models.Kelas, erro
 	}
 
 	return updatedKelas, nil
+}
+
+// GetKelasById retrieves a Kelas by its ID
+func GetKelasById(id string) (models.Kelas, error) {
+	var kelas models.Kelas
+
+	// Get DB connection
+	db, err := GetDBConnection()
+	if err != nil {
+		fmt.Printf("Error getting DB connection: %v\n", err)
+		return kelas, err
+	}
+
+	fmt.Printf("Searching for class with ID: %s\n", id)
+
+	// Retrieve the class by ID
+	if err := db.First(&kelas, "id = ?", id).Error; err != nil {
+		fmt.Printf("Error retrieving class: %v\n", err)
+		return kelas, fmt.Errorf("failed to retrieve class: %w", err)
+	}
+
+	fmt.Printf("Found class: %+v\n", kelas)
+	return kelas, nil
 }

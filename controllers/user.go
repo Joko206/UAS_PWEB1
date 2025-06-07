@@ -1,62 +1,54 @@
 package controllers
 
 import (
-	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
-	"log"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // Secret key for JWT
 const SecretKey = "secret"
 
+// Helper function to authenticate using JWT
 func Authenticate(c *fiber.Ctx) (*models.Users, error) {
-	// 🔍 Coba ambil token dari header Authorization
-	token := c.Get("Authorization")
+	var tokenString string
 
-	if token == "" {
-		// 🔍 Jika tidak ada di header, ambil dari cookie
-		token = c.Cookies("jwt")
-		if token == "" {
-			fmt.Println("🔥 Token tidak ditemukan di header maupun cookie")
-			return nil, fiber.NewError(fiber.StatusUnauthorized, "No JWT token found")
+	// First try to get token from cookie
+	cookie := c.Cookies("jwt")
+	if cookie != "" {
+		tokenString = cookie
+	} else {
+		// If no cookie, try Authorization header
+		authHeader := c.Get("Authorization")
+		if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+			tokenString = authHeader[7:]
 		}
 	}
 
-	// 🔍 Cek apakah ada prefix "Bearer"
-	if strings.HasPrefix(token, "Bearer ") {
-		token = strings.TrimPrefix(token, "Bearer ")
+	if tokenString == "" {
+		return nil, fiber.NewError(fiber.StatusUnauthorized, "No JWT token found")
 	}
 
-	// 🔍 Parsing Token
-	parsedToken, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
 	})
 
-	if err != nil || !parsedToken.Valid {
-		fmt.Println("🔥 Token tidak valid atau expired:", err)
+	if err != nil || !token.Valid {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid or expired token")
 	}
 
-	// 🔍 Ambil klaim dari token
-	claims := parsedToken.Claims.(*jwt.StandardClaims)
-
-	// 🔍 Cari user di database berdasarkan ID di klaim
+	claims := token.Claims.(*jwt.StandardClaims)
 	var user models.Users
-	result := database.DB.Where("id = ?", claims.Issuer).First(&user)
-
-	if result.Error != nil {
-		fmt.Println("🔥 User tidak ditemukan di database")
+	database.DB.Where("id = ?", claims.Issuer).First(&user)
+	if user.ID == 0 {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "User not found")
 	}
 
-	fmt.Println("✅ User ditemukan:", user.Name)
 	return &user, nil
 }
 
@@ -93,48 +85,40 @@ func Register(c *fiber.Ctx) error {
 
 	// Parse request body
 	if err := c.BodyParser(&data); err != nil {
-		log.Printf("Error parsing body: %v", err)
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	// Validasi jika name, email, atau password kosong
-	if data["name"] == "" || data["email"] == "" || data["password"] == "" {
-		return sendResponse(c, fiber.StatusBadRequest, false, "Name, email, and password are required", nil)
-	}
-
-	// Default role adalah "student" jika tidak ada
+	// Default role is "student" if not provided
 	role := data["role"]
 	if role == "" {
-		role = "student" // Role default
+		role = "student" // Default role
 	}
 
-	// Validasi role yang diizinkan
+	// Validate that the role is one of the allowed values
 	if role != "admin" && role != "teacher" && role != "student" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid role. Allowed roles: admin, teacher, student", nil)
 	}
 
-	// Hash password sebelum disimpan
+	// Hash password before saving
 	password, err := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
 	if err != nil {
-		log.Printf("Error hashing password: %v", err)
 		return sendResponse(c, fiber.StatusInternalServerError, false, "Error hashing password", nil)
 	}
 
-	// Buat user baru
+	// Create user with the role
 	user := models.Users{
 		Name:     data["name"],
 		Email:    data["email"],
 		Password: password,
-		Role:     role,
+		Role:     role, // Set the role here
 	}
 
-	// Simpan user ke database
+	// Save user to the database
 	if err := database.DB.Create(&user).Error; err != nil {
-		log.Printf("Failed to register user: %v", err)
 		return handleError(c, err, "Failed to register user")
 	}
 
-	// Kirim response sukses
+	// Return success response
 	return sendResponse(c, fiber.StatusOK, true, "User registered successfully", user)
 }
 
@@ -172,14 +156,16 @@ func Login(c *fiber.Ctx) error {
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    token,
-		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
 	}
 	c.Cookie(&cookie)
 
 	return sendResponse(c, fiber.StatusOK, true, "Login successful", fiber.Map{
-		"token": token,
-		"role":  user.Role,
+		"token":   token,
+		"role":    user.Role,
+		"user_id": user.ID,
+		"name":    user.Name,
 	})
 }
 

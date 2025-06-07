@@ -8,10 +8,6 @@ import (
 
 func GetPendidikan(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	result, err := database.GetPendidikan()
 	if err != nil {
@@ -22,14 +18,10 @@ func GetPendidikan(c *fiber.Ctx) error {
 }
 func AddPendidikan(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	// Parse body request for new Pendidikan
 	newKategori := new(models.Pendidikan)
-	err = c.BodyParser(newKategori)
+	err := c.BodyParser(newKategori)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -44,11 +36,6 @@ func AddPendidikan(c *fiber.Ctx) error {
 
 func UpdatePendidikan(c *fiber.Ctx) error {
 
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
-
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
@@ -56,7 +43,7 @@ func UpdatePendidikan(c *fiber.Ctx) error {
 
 	// Parse body request for the updated Pendidikan
 	newTask := new(models.Pendidikan)
-	err = c.BodyParser(newTask)
+	err := c.BodyParser(newTask)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -71,17 +58,12 @@ func UpdatePendidikan(c *fiber.Ctx) error {
 
 func DeletePendidikan(c *fiber.Ctx) error {
 
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
-
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err = database.DeletePendidikan(id)
+	err := database.DeletePendidikan(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete pendidikan")
 	}

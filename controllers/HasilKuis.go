@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"log"
+
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
@@ -9,13 +11,11 @@ import (
 )
 
 func SubmitJawaban(c *fiber.Ctx) error {
-	_, err := Authenticate(c)
+	var db *gorm.DB
+	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
 	if err != nil {
-		return err
+		log.Fatal("Error connecting to the database: ", err)
 	}
-
-	// Gunakan database.DB yang sudah terkonfigurasi
-	db := database.DB
 
 	// Parse data dari body (jawaban yang diberikan oleh user)
 	var userAnswers []models.SoalAnswer
@@ -24,12 +24,12 @@ func SubmitJawaban(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	// Validasi jika tidak ada jawaban yang diberikan
-	if len(userAnswers) == 0 {
-		return sendResponse(c, fiber.StatusBadRequest, false, "No answers provided", nil)
+	// Simpan jawaban pengguna ke dalam SoalAnswer
+	if err := db.Create(&userAnswers).Error; err != nil {
+		return handleError(c, err, "Failed to save answers")
 	}
 
-	// Ambil kuis_id dari soal pertama
+	// Ambil soal terkait untuk mendapatkan kuis_id
 	soalID := userAnswers[0].Soal_id
 	var soal models.Soal
 	if err := db.First(&soal, soalID).Error; err != nil {
@@ -55,8 +55,13 @@ func SubmitJawaban(c *fiber.Ctx) error {
 		}
 	}
 
-	// Hitung skor
-	score := correctAnswers * 10 // Misalnya 10 poin untuk setiap jawaban yang benar
+	// Hitung skor sebagai persentase (0-100)
+	var score uint
+	if len(soalList) > 0 {
+		score = uint((float64(correctAnswers) / float64(len(soalList))) * 100)
+	} else {
+		score = 0
+	}
 
 	// Simpan hasil kuis ke tabel Hasil_Kuis
 	result := models.Hasil_Kuis{
@@ -85,7 +90,6 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	// Kembalikan hasil
 	return sendResponse(c, fiber.StatusOK, true, "Kuis submitted successfully", result)
 }
-
 func GetHasilKuis(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	kuisID := c.Params("kuis_id")

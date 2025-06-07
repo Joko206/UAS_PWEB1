@@ -8,10 +8,6 @@ import (
 
 func GetSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	result, err := database.GetSoal()
 	if err != nil {
@@ -24,14 +20,10 @@ func GetSoal(c *fiber.Ctx) error {
 func AddSoal(c *fiber.Ctx) error {
 
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	// Parse body request for new Soal
 	newSoal := new(models.Soal)
-	err = c.BodyParser(newSoal)
+	err := c.BodyParser(newSoal)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -47,10 +39,6 @@ func AddSoal(c *fiber.Ctx) error {
 
 func UpdateSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	id := c.Params("id")
 	if id == "" {
@@ -59,7 +47,7 @@ func UpdateSoal(c *fiber.Ctx) error {
 
 	// Parse body request for updated Soal
 	newSoal := new(models.Soal)
-	err = c.BodyParser(newSoal)
+	err := c.BodyParser(newSoal)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
@@ -74,10 +62,6 @@ func UpdateSoal(c *fiber.Ctx) error {
 }
 func DeleteSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
 	id := c.Params("id")
 	if id == "" {
@@ -85,7 +69,7 @@ func DeleteSoal(c *fiber.Ctx) error {
 	}
 
 	// Delete Soal
-	err = database.DeleteSoal(id)
+	err := database.DeleteSoal(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete soal")
 	}
@@ -94,20 +78,16 @@ func DeleteSoal(c *fiber.Ctx) error {
 }
 func GetSoalByKuisID(c *fiber.Ctx) error {
 	// Ambil kuis_id dari parameter request
-
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
-
 	kuisID := c.Params("kuis_id")
 
 	// Cek apakah kuis_id valid
 	var kuis models.Kuis
-	err = database.DB.First(&kuis, kuisID).Error
+	err := database.DB.First(&kuis, kuisID).Error
 	if err != nil {
 		return sendResponse(c, fiber.StatusNotFound, false, "Kuis not found", nil)
 	}
+
+	// Ambil soal-soal yang terkait dengan kuis_id
 	var soal []models.Soal
 	err = database.DB.Where("kuis_id = ?", kuisID).Find(&soal).Error
 	if err != nil {

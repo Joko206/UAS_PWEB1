@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-
 	"github.com/Joko206/UAS_PWEB1/models"
 )
 
@@ -39,14 +38,14 @@ func CreateKuis(title string, description string, kategori uint, tingkatan uint,
 		return newKuis, fmt.Errorf("Invalid Kelas ID")
 	}
 
-	var pendidikanObj models.Kelas
-	if err := db.First(&pendidikanObj, pendidikan).Error; err != nil {
-		return newKuis, fmt.Errorf("Invalid Kelas ID")
-	}
-
 	// Insert the new Kuis into the database
 	if err := db.Create(&newKuis).Error; err != nil {
 		return newKuis, fmt.Errorf("failed to insert data into kuis: %w", err)
+	}
+
+	var PendidikanObj models.Kategori_Soal
+	if err := db.First(&PendidikanObj, pendidikan).Error; err != nil {
+		return newKuis, fmt.Errorf("Invalid Pendidikan ID")
 	}
 
 	return newKuis, nil
@@ -89,13 +88,14 @@ func DeleteKuis(id string) error {
 }
 
 // UpdateKuis updates an existing Kuis in the database
-func UpdateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, id string) (models.Kuis, error) {
+func UpdateKuis(title string, description string, kategori uint, tingkatan uint, kelas uint, pendidikan uint, id string) (models.Kuis, error) {
 	var updatedKuis = models.Kuis{
-		Title:        title,
-		Description:  description,
-		Kategori_id:  kategori,
-		Tingkatan_id: tingkatan,
-		Kelas_id:     kelas,
+		Title:         title,
+		Description:   description,
+		Kategori_id:   kategori,
+		Tingkatan_id:  tingkatan,
+		Kelas_id:      kelas,
+		Pendidikan_id: pendidikan,
 	}
 
 	// Get DB connection

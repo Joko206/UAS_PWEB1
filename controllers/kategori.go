@@ -9,11 +9,6 @@ import (
 func GetKategori(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
 
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
-
 	result, err := database.GetallTasks()
 	if err != nil {
 		return handleError(c, err, "Failed to fetch categories")
@@ -23,11 +18,7 @@ func GetKategori(c *fiber.Ctx) error {
 }
 
 func AddKategori(c *fiber.Ctx) error {
-
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
+	// Authenticate the user using the JWT token
 
 	newKategori := new(models.Kategori_Soal)
 	if err := c.BodyParser(newKategori); err != nil {
@@ -43,11 +34,7 @@ func AddKategori(c *fiber.Ctx) error {
 }
 
 func UpdateKategori(c *fiber.Ctx) error {
-
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
+	// Authenticate the user using the JWT token
 
 	id := c.Params("id")
 	if id == "" {
@@ -68,18 +55,14 @@ func UpdateKategori(c *fiber.Ctx) error {
 }
 
 func DeleteKategori(c *fiber.Ctx) error {
-
-	_, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
+	// Authenticate the user using the JWT token
 
 	id := c.Params("id")
 	if id == "" {
 		return sendResponse(c, fiber.StatusBadRequest, false, "ID cannot be empty", nil)
 	}
 
-	err = database.DeleteKategori(id)
+	err := database.DeleteKategori(id)
 	if err != nil {
 		return handleError(c, err, "Failed to delete category")
 	}

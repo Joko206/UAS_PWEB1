@@ -9,9 +9,9 @@ import (
 type Users struct {
 	gorm.Model
 	id       uint   `gorm:"primaryKey"`
-	Name     string `json:"name" gorm:"column:name;not null"` // Pastikan kolom 'name' ada di database
-	Email    string `json:"email" gorm:"unique;not null"`
-	Password []byte `json:"password" gorm:"not null"`
+	Name     string `json:"name"`
+	Email    string `json:"email" gorm:"unique"`
+	Password []byte `json:"-"`
 	Role     string `json:"role"`
 }
 type Kategori_Soal struct {
@@ -28,7 +28,7 @@ type Tingkatan struct {
 }
 type Kelas struct {
 	gorm.Model
-	ID          uint   `gorm:"primaryKey" json:"id"`
+	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -36,8 +36,8 @@ type Kuis struct {
 	gorm.Model
 	Title         string        `json:"title"`
 	Description   string        `json:"description"`
-	Kategori_id   uint          `json:"kategori_id"    `
-	Kategori      Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"`
+	Kategori_id   uint          `json:"kategori_id"    `                                     // Gunakan tipe uint untuk Kategori_id
+	Kategori      Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"` //Menambahkan constraint foreign key
 	Tingkatan_id  uint          `json:"tingkatan_id"`
 	Tingkatan     Tingkatan     `gorm:"foreignKey:Tingkatan_id;constraint:OnDelete:CASCADE;"`
 	Kelas_id      uint          `json:"kelas_id"`
@@ -68,7 +68,7 @@ type Hasil_Kuis struct {
 	Kuis_id        uint  `json:"kuis_id"`
 	Kuis           Kuis  `gorm:"foreignKey:Kuis_id;constraint:OnDelete:CASCADE;"`
 	Score          uint  `json:"score"`
-	Correct_Answer uint  `json:"correct_answer;constraint:OnDelete:CASCADE;"`
+	Correct_Answer uint  `json:"correct_answer"`
 }
 type SoalAnswer struct {
 	gorm.Model

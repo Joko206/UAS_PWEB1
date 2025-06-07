@@ -2,7 +2,6 @@ package database
 
 import (
 	"fmt"
-
 	"github.com/Joko206/UAS_PWEB1/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -51,14 +50,11 @@ func InitDB() (*gorm.DB, error) {
 func GetDBConnection() (*gorm.DB, error) {
 	// If DB is already initialized, reuse it, otherwise initialize a new connection
 	if DB == nil {
-		fmt.Println("Initializing new database connection...")
 		db, err := InitDB()
 		if err != nil {
-			fmt.Printf("Error initializing database: %v\n", err)
 			return nil, err
 		}
 		DB = db
-		fmt.Println("Database connection initialized successfully")
 	}
 	return DB, nil
 }

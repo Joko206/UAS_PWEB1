@@ -11,6 +11,33 @@ import (
 )
 
 func GetKuis(c *fiber.Ctx) error {
+	// Authenticate the user using the JWT token
+	user, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
+	// Get kuis that user can access (public + private from joined classes)
+	result, err := database.GetKuisForUser(user.ID)
+	if err != nil {
+		return handleError(c, err, "Failed to retrieve quizzes")
+	}
+
+	return sendResponse(c, fiber.StatusOK, true, "Accessible quizzes retrieved successfully", result)
+}
+
+// GetAllKuis retrieves all kuis (admin only)
+func GetAllKuis(c *fiber.Ctx) error {
+	// Authenticate the user using the JWT token
+	user, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
+	// Check if user is admin
+	if user.Role != "admin" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Admin only.", nil)
+	}
 
 	result, err := database.GetKuis()
 	if err != nil {
@@ -61,8 +88,14 @@ func AddKuis(c *fiber.Ctx) error {
 	if err := db.First(&pendidikan, newKuis.Pendidikan_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Pendidikan ID", nil)
 	}
+	// Get authenticated user
+	user, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
 	// Create Kuis
-	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id, newKuis.Pendidikan_id)
+	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.IsPrivate, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id, newKuis.Pendidikan_id, user.ID)
 	if err != nil {
 		return handleError(c, err, "Failed to create quiz")
 	}
@@ -84,7 +117,7 @@ func UpdateKuis(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
-	result, err := database.UpdateKuis(newTask.Title, newTask.Description, newTask.Kategori_id, newTask.Tingkatan_id, newTask.Kelas_id, newTask.Pendidikan_id, id)
+	result, err := database.UpdateKuis(newTask.Title, newTask.Description, newTask.IsPrivate, newTask.Kategori_id, newTask.Tingkatan_id, newTask.Kelas_id, newTask.Pendidikan_id, id)
 	if err != nil {
 		return handleError(c, err, "Failed to update quiz")
 	}

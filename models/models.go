@@ -31,19 +31,25 @@ type Kelas struct {
 	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	JoinCode    string `json:"join_code" gorm:"unique"`
+	CreatedBy   uint   `json:"created_by"`
+	Creator     Users  `gorm:"foreignKey:CreatedBy;constraint:OnDelete:CASCADE;"`
 }
 type Kuis struct {
 	gorm.Model
 	Title         string        `json:"title"`
 	Description   string        `json:"description"`
-	Kategori_id   uint          `json:"kategori_id"    `                                     // Gunakan tipe uint untuk Kategori_id
-	Kategori      Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"` //Menambahkan constraint foreign key
+	IsPrivate     bool          `json:"is_private" gorm:"default:false"`
+	Kategori_id   uint          `json:"kategori_id"`
+	Kategori      Kategori_Soal `gorm:"foreignKey:Kategori_id;constraint:OnDelete:CASCADE;"`
 	Tingkatan_id  uint          `json:"tingkatan_id"`
 	Tingkatan     Tingkatan     `gorm:"foreignKey:Tingkatan_id;constraint:OnDelete:CASCADE;"`
 	Kelas_id      uint          `json:"kelas_id"`
 	Kelas         Kelas         `gorm:"foreignKey:Kelas_id;constraint:OnDelete:CASCADE;"`
 	Pendidikan_id uint          `json:"pendidikan_id"`
 	Pendidikan    Pendidikan    `gorm:"foreignKey:Pendidikan_id;constraint:OnDelete:CASCADE;"`
+	CreatedBy     uint          `json:"created_by"`
+	Creator       Users         `gorm:"foreignKey:CreatedBy;constraint:OnDelete:CASCADE;"`
 }
 
 type Soal struct {

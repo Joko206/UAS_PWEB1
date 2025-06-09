@@ -34,7 +34,7 @@ func Authenticate(c *fiber.Ctx) (*models.Users, error) {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "No JWT token found")
 	}
 
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
 	})
 
@@ -42,9 +42,10 @@ func Authenticate(c *fiber.Ctx) (*models.Users, error) {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "Invalid or expired token")
 	}
 
-	claims := token.Claims.(*jwt.StandardClaims)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["iss"].(string)
 	var user models.Users
-	database.DB.Where("id = ?", claims.Issuer).First(&user)
+	database.DB.Where("id = ?", userID).First(&user)
 	if user.ID == 0 {
 		return nil, fiber.NewError(fiber.StatusUnauthorized, "User not found")
 	}
@@ -141,13 +142,16 @@ func Login(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusUnauthorized, false, "Invalid password", nil)
 	}
 
-	// Generate JWT token
-	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Issuer:    strconv.Itoa(int(user.ID)),
-		ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-	})
+	// Generate JWT token with custom claims including role
+	claims := jwt.MapClaims{
+		"iss":  strconv.Itoa(int(user.ID)),
+		"exp":  time.Now().Add(time.Hour * 24).Unix(),
+		"role": user.Role,
+		"name": user.Name,
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	token, err := claims.SignedString([]byte(SecretKey))
+	tokenString, err := token.SignedString([]byte(SecretKey))
 	if err != nil {
 		return handleError(c, err, "Failed to generate token")
 	}
@@ -155,14 +159,14 @@ func Login(c *fiber.Ctx) error {
 	// Set JWT cookie
 	cookie := fiber.Cookie{
 		Name:     "jwt",
-		Value:    token,
+		Value:    tokenString,
 		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
 	}
 	c.Cookie(&cookie)
 
 	return sendResponse(c, fiber.StatusOK, true, "Login successful", fiber.Map{
-		"token":   token,
+		"token":   tokenString,
 		"role":    user.Role,
 		"user_id": user.ID,
 		"name":    user.Name,

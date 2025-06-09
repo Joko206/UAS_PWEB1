@@ -4,16 +4,13 @@ import (
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"log"
 )
 
 func JoinKelas(c *fiber.Ctx) error {
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to the database: ", err)
+		return handleError(c, err, "Failed to get database connection")
 	}
 
 	var requestData struct {
@@ -21,29 +18,25 @@ func JoinKelas(c *fiber.Ctx) error {
 		Kelas_id uint `json:"kelas_id"`
 	}
 
-	err = c.BodyParser(&requestData)
-	if err != nil {
+	if err := c.BodyParser(&requestData); err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
 	// Cek apakah user dengan User_id ada
 	var user models.Users
-	err = db.First(&user, requestData.User_id).Error
-	if err != nil {
+	if err := db.First(&user, requestData.User_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "User does not exist", nil)
 	}
 
 	// Cek apakah kelas dengan Kelas_id ada
 	var kelas models.Kelas
-	err = db.First(&kelas, requestData.Kelas_id).Error
-	if err != nil {
+	if err := db.First(&kelas, requestData.Kelas_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Class does not exist", nil)
 	}
 
 	// Cek apakah user sudah tergabung dengan kelas
 	var existingRecord models.Kelas_Pengguna
-	err = db.Where("users_id = ? AND kelas_id = ?", requestData.User_id, requestData.Kelas_id).First(&existingRecord).Error
-	if err == nil {
+	if err := db.Where("users_id = ? AND kelas_id = ?", requestData.User_id, requestData.Kelas_id).First(&existingRecord).Error; err == nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "User already joined this class", nil)
 	}
 
@@ -67,31 +60,24 @@ func GetKelasByUserID(c *fiber.Ctx) error {
 		return err
 	}
 
-	// Ambil semua kelas yang diikuti oleh user berdasarkan Users_id
-	var kelasPengguna []models.Kelas_Pengguna
-	err = database.DB.Where("users_id = ?", user.ID).Find(&kelasPengguna).Error
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get classes",
-		})
+		return handleError(c, err, "Failed to get database connection")
 	}
 
-	// Ambil data kelas terkait
+	// Ambil semua kelas yang diikuti oleh user dengan preload untuk efisiensi
+	var kelasPengguna []models.Kelas_Pengguna
+	if err := db.Preload("Kelas").Where("users_id = ?", user.ID).Find(&kelasPengguna).Error; err != nil {
+		return handleError(c, err, "Failed to get user classes")
+	}
+
+	// Extract kelas data dari relasi
 	var kelasList []models.Kelas
 	for _, kp := range kelasPengguna {
-		var kelas models.Kelas
-		err := database.DB.Where("id = ?", kp.Kelas_id).First(&kelas).Error
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to get class data",
-			})
-		}
-		kelasList = append(kelasList, kelas)
+		kelasList = append(kelasList, kp.Kelas)
 	}
 
-	// Return response
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"success": true,
-		"data":    kelasList,
-	})
+	// Return response menggunakan helper function
+	return sendResponse(c, fiber.StatusOK, true, "User classes retrieved successfully", kelasList)
 }

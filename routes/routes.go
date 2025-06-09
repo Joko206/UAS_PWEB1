@@ -82,6 +82,8 @@ func Setup(app *fiber.App) {
 
 	// Hasil Kuis Routes (Admin, Teacher, Student)
 	result := app.Group("/hasil-kuis", AuthMiddleware)
-	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis)
+	result.Get("/my-results", controllers.GetAllHasilKuisByUser)
+	result.Get("/user/:user_id", controllers.RoleMiddleware([]string{"admin", "teacher"}), controllers.GetHasilKuisByUserID)
 	result.Post("/submit-jawaban", controllers.SubmitJawaban)
+	result.Get("/:user_id/:kuis_id", controllers.GetHasilKuis)
 }

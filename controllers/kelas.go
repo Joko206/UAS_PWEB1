@@ -8,6 +8,10 @@ import (
 
 func GetKelas(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	result, err := database.GetKelas()
 	if err != nil {

@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+
 	"github.com/Joko206/UAS_PWEB1/models"
 )
 
@@ -23,8 +24,8 @@ func CreateKategori(name string, description string) (models.Kategori_Soal, erro
 	return newKategori, nil
 }
 
-// GetallTasks retrieves all Kategori_Soal from the database
-func GetallTasks() ([]models.Kategori_Soal, error) {
+// GetKategori retrieves all Kategori_Soal from the database
+func GetKategori() ([]models.Kategori_Soal, error) {
 	var getKategori []models.Kategori_Soal
 
 	// Get DB connection

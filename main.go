@@ -3,23 +3,27 @@ package main
 import (
 	"log"
 	"os"
-
 	"strings"
 
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/routes"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found, using default values")
+	}
+
 	// Check if seed argument is provided
 	if len(os.Args) > 1 && os.Args[1] == "seed" {
 		log.Println("Running database seeding...")
 
 		// Initialize database connection
-		_, err := database.InitDB()
-		if err != nil {
+		if err := database.InitializeDatabase(); err != nil {
 			log.Fatalf("Failed to initialize database: %v", err)
 		}
 
@@ -32,7 +36,17 @@ func main() {
 		return
 	}
 
-	database.GetDBConnection()
+	// Initialize database connection for the main application
+	if err := database.InitializeDatabase(); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	// Ensure database connection is closed gracefully on exit
+	defer func() {
+		if err := database.CloseDB(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	app := fiber.New()
 
@@ -52,6 +66,13 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Listen("0.0.0.0:8000")
+	// Get port from environment variable or use default
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+
+	log.Printf("Server starting on port %s", port)
+	app.Listen("0.0.0.0:" + port)
 
 }

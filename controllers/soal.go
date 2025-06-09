@@ -8,6 +8,10 @@ import (
 
 func GetSoal(c *fiber.Ctx) error {
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	result, err := database.GetSoal()
 	if err != nil {
@@ -18,12 +22,15 @@ func GetSoal(c *fiber.Ctx) error {
 }
 
 func AddSoal(c *fiber.Ctx) error {
-
 	// Authenticate the user using the JWT token
+	_, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
 
 	// Parse body request for new Soal
 	newSoal := new(models.Soal)
-	err := c.BodyParser(newSoal)
+	err = c.BodyParser(newSoal)
 	if err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}

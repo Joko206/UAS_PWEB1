@@ -8,7 +8,6 @@ import (
 
 type Users struct {
 	gorm.Model
-	id       uint   `gorm:"primaryKey"`
 	Name     string `json:"name"`
 	Email    string `json:"email" gorm:"unique"`
 	Password []byte `json:"-"`
@@ -16,19 +15,16 @@ type Users struct {
 }
 type Kategori_Soal struct {
 	gorm.Model
-	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Tingkatan struct {
 	gorm.Model
-	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 type Kelas struct {
 	gorm.Model
-	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	JoinCode    string `json:"join_code" gorm:"unique"`
@@ -63,7 +59,6 @@ type Soal struct {
 
 type Pendidikan struct {
 	gorm.Model
-	id          uint   `gorm:"primaryKey"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }

@@ -1,13 +1,9 @@
 package controllers
 
 import (
-	"log"
-
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func GetKuis(c *fiber.Ctx) error {
@@ -48,22 +44,22 @@ func GetAllKuis(c *fiber.Ctx) error {
 }
 
 func AddKuis(c *fiber.Ctx) error {
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatal("Error connecting to the database: ", err)
-	}
-
-	_, err = Authenticate(c)
+	// Authenticate user first
+	user, err := Authenticate(c)
 	if err != nil {
 		return err
 	}
 
 	// Parse request body
 	newKuis := new(models.Kuis)
-	err = c.BodyParser(newKuis)
-	if err != nil {
+	if err := c.BodyParser(newKuis); err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
+	}
+
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
+	if err != nil {
+		return handleError(c, err, "Failed to get database connection")
 	}
 
 	// Validate Kategori
@@ -84,17 +80,13 @@ func AddKuis(c *fiber.Ctx) error {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Kelas ID", nil)
 	}
 
+	// Validate Pendidikan
 	var pendidikan models.Pendidikan
 	if err := db.First(&pendidikan, newKuis.Pendidikan_id).Error; err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid Pendidikan ID", nil)
 	}
-	// Get authenticated user
-	user, err := Authenticate(c)
-	if err != nil {
-		return err
-	}
 
-	// Create Kuis
+	// Create Kuis using database function
 	result, err := database.CreateKuis(newKuis.Title, newKuis.Description, newKuis.IsPrivate, newKuis.Kategori_id, newKuis.Tingkatan_id, newKuis.Kelas_id, newKuis.Pendidikan_id, user.ID)
 	if err != nil {
 		return handleError(c, err, "Failed to create quiz")

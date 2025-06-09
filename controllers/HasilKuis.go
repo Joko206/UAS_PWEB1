@@ -1,26 +1,21 @@
 package controllers
 
 import (
-	"log"
-
 	"github.com/Joko206/UAS_PWEB1/database"
 	"github.com/Joko206/UAS_PWEB1/models"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func SubmitJawaban(c *fiber.Ctx) error {
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
 	if err != nil {
-		log.Fatal("Error connecting to the database: ", err)
+		return handleError(c, err, "Failed to get database connection")
 	}
 
 	// Parse data dari body (jawaban yang diberikan oleh user)
 	var userAnswers []models.SoalAnswer
-	err = c.BodyParser(&userAnswers)
-	if err != nil {
+	if err := c.BodyParser(&userAnswers); err != nil {
 		return sendResponse(c, fiber.StatusBadRequest, false, "Invalid request body", nil)
 	}
 
@@ -90,14 +85,16 @@ func SubmitJawaban(c *fiber.Ctx) error {
 	// Kembalikan hasil
 	return sendResponse(c, fiber.StatusOK, true, "Kuis submitted successfully", result)
 }
+
+// GetHasilKuis - Get specific quiz result by user_id and kuis_id (kept for backward compatibility)
 func GetHasilKuis(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	kuisID := c.Params("kuis_id")
 
-	var db *gorm.DB
-	db, err := gorm.Open(postgres.Open(database.Dsn), &gorm.Config{})
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
 	if err != nil {
-		return handleError(c, err, "Failed to connect to the database")
+		return handleError(c, err, "Failed to get database connection")
 	}
 
 	// Cari hasil kuis berdasarkan user_id dan kuis_id
@@ -108,4 +105,62 @@ func GetHasilKuis(c *fiber.Ctx) error {
 
 	// Kembalikan hasil kuis
 	return sendResponse(c, fiber.StatusOK, true, "Hasil kuis ditemukan", hasilKuis)
+}
+
+// GetAllHasilKuisByUser - Get all quiz results for the authenticated user (OPTIMIZED)
+func GetAllHasilKuisByUser(c *fiber.Ctx) error {
+	// Authenticate user
+	user, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
+	if err != nil {
+		return handleError(c, err, "Failed to get database connection")
+	}
+
+	// Get all quiz results for the user with related quiz information in one query
+	var hasilKuisList []models.Hasil_Kuis
+	if err := db.Preload("Kuis").Where("users_id = ?", user.ID).Find(&hasilKuisList).Error; err != nil {
+		return handleError(c, err, "Failed to fetch quiz results")
+	}
+
+	// Return all results
+	return sendResponse(c, fiber.StatusOK, true, "All quiz results retrieved successfully", hasilKuisList)
+}
+
+// GetHasilKuisByUserID - Get all quiz results for a specific user (Admin/Teacher only)
+func GetHasilKuisByUserID(c *fiber.Ctx) error {
+	// Authenticate user
+	authUser, err := Authenticate(c)
+	if err != nil {
+		return err
+	}
+
+	// Check if user is admin or teacher
+	if authUser.Role != "admin" && authUser.Role != "teacher" {
+		return sendResponse(c, fiber.StatusForbidden, false, "Access denied. Admin or Teacher only.", nil)
+	}
+
+	userID := c.Params("user_id")
+	if userID == "" {
+		return sendResponse(c, fiber.StatusBadRequest, false, "User ID is required", nil)
+	}
+
+	// Get database connection (reuse global connection)
+	db, err := database.GetDBConnection()
+	if err != nil {
+		return handleError(c, err, "Failed to get database connection")
+	}
+
+	// Get all quiz results for the specified user with related quiz information
+	var hasilKuisList []models.Hasil_Kuis
+	if err := db.Preload("Kuis").Where("users_id = ?", userID).Find(&hasilKuisList).Error; err != nil {
+		return handleError(c, err, "Failed to fetch quiz results")
+	}
+
+	// Return all results
+	return sendResponse(c, fiber.StatusOK, true, "Quiz results retrieved successfully", hasilKuisList)
 }

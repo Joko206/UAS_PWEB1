@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	host     = "ballast.proxy.rlwy.net"
-	port     = 46530
+	host     = "hopper.proxy.rlwy.net"
+	port     = 27146
 	user     = "postgres"
-	password = "rQeJuOyOlkKxlVKfHYvhUkAoboRYCrWG"
+	password = "yBxKUopLCrVnBCpjpKdADHLGYMTYkKPC"
 	dbname   = "railway"
 )
 
